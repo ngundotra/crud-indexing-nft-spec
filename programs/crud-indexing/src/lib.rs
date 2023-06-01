@@ -51,6 +51,7 @@ pub mod crud_indexing {
                 asset_id: ctx.accounts.metadata.key(),
                 pubkeys: vec![
                     ctx.accounts.collection.key().clone(),
+                    ctx.accounts.owner.key().clone(),
                     ctx.accounts.metadata.key().clone(),
                 ],
                 data: vec![],
@@ -64,9 +65,15 @@ pub mod crud_indexing {
         ctx.accounts.metadata.owner = *ctx.accounts.owner.key;
 
         emit_cpi!({
-            CrudTransfer {
+            CrudUpdate {
                 asset_id: ctx.accounts.metadata.key().clone(),
-                new_authority: ctx.accounts.dest.key().clone(),
+                authority: ctx.accounts.dest.key().clone(),
+                pubkeys: vec![
+                    ctx.accounts.collection.key().clone(),
+                    ctx.accounts.owner.key().clone(),
+                    ctx.accounts.metadata.key().clone(),
+                ],
+                data: vec![],
             }
         });
 
@@ -74,7 +81,7 @@ pub mod crud_indexing {
     }
 
     pub fn get_asset_data(ctx: Context<GetAssetDataAccounts>, data: Vec<u8>) -> Result<()> {
-        let data = ctx.remaining_accounts[1].try_borrow_mut_data()?;
+        let data = ctx.remaining_accounts[2].try_borrow_mut_data()?;
 
         let account_disc = &data[0..8];
         let json_data = if *account_disc == Metadata::DISCRIMINATOR {
@@ -174,14 +181,9 @@ pub struct CrudCreate {
 }
 
 #[event]
-pub struct CrudTransfer {
-    asset_id: Pubkey,
-    new_authority: Pubkey,
-}
-
-#[event]
 pub struct CrudUpdate {
     asset_id: Pubkey,
+    authority: Pubkey,
     pubkeys: Vec<Pubkey>,
     data: Vec<u8>,
 }
