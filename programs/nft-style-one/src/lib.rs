@@ -8,12 +8,8 @@ use bs58_pubkey::serde_pubkey;
 
 declare_id!("3YtbN69K6qkLsc3nWCPrzSkyNmwzF5uRppmfm9FyYz4k");
 
-pub const SYMBOL_MAX_LEN: usize = 8;
-pub const URI_MAX_LEN: usize = 64;
-pub const NAME_MAX_LEN: usize = 64;
-
 #[program]
-pub mod crud_indexing {
+pub mod nft_style_one {
     use super::*;
 
     pub fn init_collection(ctx: Context<InitCollection>, num_items: u32) -> Result<()> {
