@@ -3,10 +3,7 @@
         "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
         "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check"
     },
-    "dependencies": {
-        "@coral-xyz/anchor": "^0.27.0"
-    },
-    "devDependencies": {
+     "Dependencies": {
         "chai": "^4.3.4",
         "mocha": "^9.0.3",
         "ts-mocha": "^10.0.0",

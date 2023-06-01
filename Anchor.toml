@@ -1,8 +1,8 @@
 [features]
-seeds = false
+seeds = true
 skip-lint = false
 [programs.localnet]
-crud_indexing = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
+crud_indexing = "3YtbN69K6qkLsc3nWCPrzSkyNmwzF5uRppmfm9FyYz4k"
 
 [registry]
 url = "https://api.apr.dev"
