@@ -3,7 +3,7 @@
         "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
         "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check"
     },
-     "Dependencies": {
+    "Dependencies": {
         "chai": "^4.3.4",
         "mocha": "^9.0.3",
         "ts-mocha": "^10.0.0",
@@ -12,5 +12,9 @@
         "@types/mocha": "^9.0.0",
         "typescript": "^4.3.5",
         "prettier": "^2.6.2"
+    },
+    "dependencies": {
+        "redis": "^4.6.7",
+        "redis-om": "^0.3.6"
     }
 }

@@ -22,7 +22,7 @@ pub mod crud_indexing {
 
         // Issue a collection
         emit_cpi!({
-            CrudCreate {
+            CudCreate {
                 authority: ctx.accounts.owner.key(),
                 asset_id: ctx.accounts.collection.key(),
                 pubkeys: vec![ctx.accounts.collection.key().clone()],
@@ -46,7 +46,7 @@ pub mod crud_indexing {
 
         // Issue a metadata
         emit_cpi!({
-            CrudCreate {
+            CudCreate {
                 authority: ctx.accounts.owner.key(),
                 asset_id: ctx.accounts.metadata.key(),
                 pubkeys: vec![
@@ -65,7 +65,7 @@ pub mod crud_indexing {
         ctx.accounts.metadata.owner = *ctx.accounts.owner.key;
 
         emit_cpi!({
-            CrudUpdate {
+            CudUpdate {
                 asset_id: ctx.accounts.metadata.key().clone(),
                 authority: ctx.accounts.dest.key().clone(),
                 pubkeys: vec![
@@ -81,7 +81,7 @@ pub mod crud_indexing {
     }
 
     pub fn get_asset_data(ctx: Context<GetAssetDataAccounts>, data: Vec<u8>) -> Result<()> {
-        let data = ctx.remaining_accounts[2].try_borrow_mut_data()?;
+        let data = ctx.accounts.asset_id.try_borrow_mut_data()?;
 
         let account_disc = &data[0..8];
         let json_data = if *account_disc == Metadata::DISCRIMINATOR {
@@ -102,17 +102,6 @@ pub mod crud_indexing {
         Ok(())
     }
 }
-
-// pub fn account_discriminator(account_name: &str) -> [u8; 8] {
-//     let discriminator_preimage = { format!("account:{account_name}") };
-
-//     let mut discriminator = [0u8; 8];
-//     discriminator.copy_from_slice(
-//         &anchor_lang::solana_program::hash::hashv(&[discriminator_preimage.as_bytes()]).to_bytes()
-//             [..8],
-//     );
-//     return discriminator;
-// }
 
 #[derive(Debug, Serialize)]
 #[account]
@@ -170,10 +159,12 @@ pub struct TransferMe<'info> {
 pub struct GetAssetDataAccounts<'info> {
     /// CHECK:
     pub asset_id: AccountInfo<'info>,
+    /// CHECK:
+    pub authority: AccountInfo<'info>,
 }
 
 #[event]
-pub struct CrudCreate {
+pub struct CudCreate {
     asset_id: Pubkey,
     authority: Pubkey,
     pubkeys: Vec<Pubkey>,
@@ -181,7 +172,7 @@ pub struct CrudCreate {
 }
 
 #[event]
-pub struct CrudUpdate {
+pub struct CudUpdate {
     asset_id: Pubkey,
     authority: Pubkey,
     pubkeys: Vec<Pubkey>,
@@ -189,6 +180,6 @@ pub struct CrudUpdate {
 }
 
 #[event]
-pub struct CrudDelete {
+pub struct CudDelete {
     asset_id: Pubkey,
 }

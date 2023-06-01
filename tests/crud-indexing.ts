@@ -4,83 +4,6 @@ import { CrudIndexing } from "../target/types/crud_indexing";
 import { TransactionInstruction } from "@solana/web3.js";
 import { PublicKey } from "@solana/web3.js";
 
-type UniversalIx = {
-  programId: anchor.web3.PublicKey;
-  keys: anchor.web3.PublicKey[];
-  data: Buffer;
-};
-
-function orderInstructions(tx: anchor.web3.TransactionResponse): UniversalIx[] {
-  let accounts: anchor.web3.PublicKey[] =
-    tx.transaction.message.staticAccountKeys;
-  accounts = accounts.concat(tx.meta.loadedAddresses.writable ?? []);
-  accounts = accounts.concat(tx.meta.loadedAddresses.readonly ?? []);
-
-  let ordered: UniversalIx[] = [];
-
-  let outerIdx = 0;
-  let innerIdx = 0;
-  for (const outerIxFlat of tx.transaction.message.instructions) {
-    let outerIx: UniversalIx = {
-      programId: accounts[outerIxFlat.programIdIndex],
-      keys: outerIxFlat.accounts.map((idx) => accounts[idx]),
-      data: anchor.utils.bytes.bs58.decode(outerIxFlat.data),
-    };
-    ordered.push(outerIx);
-
-    const innerIxBucket = tx.meta?.innerInstructions[innerIdx];
-    if (innerIxBucket && innerIxBucket.index === outerIdx) {
-      for (const innerIxFlat of innerIxBucket.instructions) {
-        let innerIx: UniversalIx = {
-          programId: accounts[innerIxFlat.programIdIndex],
-          keys: innerIxFlat.accounts.map((idx) => accounts[idx]),
-          data: anchor.utils.bytes.bs58.decode(innerIxFlat.data),
-        };
-        ordered.push(innerIx);
-      }
-      innerIdx += 1;
-    }
-    outerIdx += 1;
-  }
-  return ordered;
-}
-
-const CPI_EVENT_IX: Buffer = Buffer.from([
-  0xe4, 0x45, 0xa5, 0x2e, 0x51, 0xcb, 0x9a, 0x1d,
-]);
-
-// Parses CPI events from a transaction for the given anchor program
-function parseCpiEvents(
-  tx: anchor.web3.TransactionResponse,
-  program: anchor.Program
-): anchor.Event[] {
-  let orderedIxs = orderInstructions(tx);
-  // console.log(orderedIxs);
-
-  let events: anchor.Event[] = [];
-  for (let i = 1; i < orderedIxs.length; i += 1) {
-    const ix = orderedIxs[i];
-
-    if (ix.data.slice(0, 8).equals(CPI_EVENT_IX)) {
-      const eventAuthority = anchor.web3.PublicKey.findProgramAddressSync(
-        [Buffer.from("__event_authority")],
-        program.programId
-      )[0];
-
-      // CHECK that the event authority is the CPI authority
-      if (
-        ix.keys.length != 1 ||
-        ix.keys[0].toBase58() !== eventAuthority.toBase58()
-      ) {
-        continue;
-      }
-
-      const eventData = anchor.utils.bytes.base64.encode(ix.data.slice(8));
-      const event = program.coder.events.decode(eventData);
-      events.push(event);
-    }
-  }
-
   return events;
 }
 
@@ -90,13 +13,14 @@ async function interpretEvents(
 ) {
   for (const event of events) {
     if (event.name == "CrudCreate" || event.name == "CrudUpdate") {
+      let authority: PublicKey = event.data.authority as any;
       let assetId: PublicKey = event.data.assetId as any;
       let pubkeys: PublicKey[] = event.data.pubkeys as any;
       let ix_data: Buffer = event.data.data as any;
 
       let ix = await program.methods
         .getAssetData(ix_data)
-        .accounts({ assetId })
+        .accounts({ assetId, authority })
         .remainingAccounts(
           pubkeys.map((key) => {
             return {
