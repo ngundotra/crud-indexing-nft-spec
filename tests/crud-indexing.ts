@@ -1,7 +1,8 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { CrudIndexing } from "../target/types/crud_indexing";
-import { GIndexer, NFTRpc, createGIndexer } from "./gIndexer";
+import { GIndexer, createGIndexer } from "./gIndexer";
+import { NFTRpc } from "./nftRpc";
 import { assert } from "chai";
 
 describe("crud-indexing", () => {
