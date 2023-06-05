@@ -165,10 +165,6 @@ describe("crud-indexing", () => {
       "Transferring an NFT Asset must update the delegate as the second key (in this case we set it to dest)"
     );
   });
-  after(async () => {
-    console.log("Closing Redis connection");
-    await gIndexer.client.close();
-  });
   it("Can burn an NFT", async () => {
     const tx = await program.methods
       .burn(0, 1)
