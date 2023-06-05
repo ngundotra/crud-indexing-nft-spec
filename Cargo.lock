@@ -321,6 +321,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "bs58-pubkey"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+ "bs58 0.5.0",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "bumpalo"
 version = "3.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -453,6 +463,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3c063cd8cc95f5c377ed0d4b49a4b21f632396ff690e8470c29b3359b346984b"
 dependencies = [
  "cfg-if",
+]
+
+[[package]]
+name = "crud-indexing"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+ "bs58-pubkey",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -792,21 +812,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "nft-style-one"
-version = "0.1.0"
-dependencies = [
- "anchor-lang",
- "bs58 0.5.0",
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "nft-style-two"
 version = "0.1.0"
 dependencies = [
  "anchor-lang",
- "bs58 0.5.0",
+ "bs58-pubkey",
  "serde",
  "serde_json",
 ]

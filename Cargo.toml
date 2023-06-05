@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "bs58-pubkey",
     "programs/*"
 ]
 

@@ -1,9 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_lang::Discriminator;
-use serde::{self, Deserialize, Deserializer, Serialize, Serializer};
-use serde_json;
+use serde::{self, Serialize};
 
-mod bs58_pubkey;
 use bs58_pubkey::serde_pubkey;
 
 declare_id!("3YtbN69K6qkLsc3nWCPrzSkyNmwzF5uRppmfm9FyYz4k");
@@ -40,8 +38,8 @@ pub mod nft_style_two {
                 authority: ctx.accounts.owner.key(),
                 asset_id: ctx.accounts.collection.key(),
                 pubkeys: vec![
-                    ctx.accounts.collection.key().clone(),
-                    ctx.accounts.edition_metadata.key().clone(),
+                    ctx.accounts.collection.key(),
+                    ctx.accounts.edition_metadata.key(),
                 ],
                 data: vec![],
             }
@@ -51,8 +49,8 @@ pub mod nft_style_two {
                 authority: ctx.accounts.owner.key(),
                 asset_id: ctx.accounts.edition_metadata.key(),
                 pubkeys: vec![
-                    ctx.accounts.collection.key().clone(),
-                    ctx.accounts.edition_metadata.key().clone(),
+                    ctx.accounts.collection.key(),
+                    ctx.accounts.edition_metadata.key(),
                 ],
                 data: vec![],
             }
@@ -75,9 +73,9 @@ pub mod nft_style_two {
         );
 
         ctx.accounts.metadata.set_inner(Metadata {
-            name: name.clone(),
-            symbol: symbol.clone(),
-            uri: uri.clone(),
+            name,
+            symbol,
+            uri,
             owner: *ctx.accounts.owner.key,
         });
         ctx.accounts.master_edition.set_inner(MasterEdition {
@@ -90,11 +88,11 @@ pub mod nft_style_two {
                 authority: ctx.accounts.owner.key(),
                 asset_id: ctx.accounts.master_edition.key(),
                 pubkeys: vec![
-                    ctx.accounts.collection.key().clone(),
-                    ctx.accounts.edition_metadata.key().clone(),
-                    ctx.accounts.master_edition.key().clone(),
-                    ctx.accounts.owner.key().clone(),
-                    ctx.accounts.metadata.key().clone(),
+                    ctx.accounts.collection.key(),
+                    ctx.accounts.edition_metadata.key(),
+                    ctx.accounts.master_edition.key(),
+                    ctx.accounts.owner.key(),
+                    ctx.accounts.metadata.key(),
                 ],
                 data: vec![],
             }
@@ -104,11 +102,11 @@ pub mod nft_style_two {
                 authority: ctx.accounts.owner.key(),
                 asset_id: ctx.accounts.metadata.key(),
                 pubkeys: vec![
-                    ctx.accounts.collection.key().clone(),
-                    ctx.accounts.edition_metadata.key().clone(),
-                    ctx.accounts.master_edition.key().clone(),
-                    ctx.accounts.owner.key().clone(),
-                    ctx.accounts.metadata.key().clone(),
+                    ctx.accounts.collection.key(),
+                    ctx.accounts.edition_metadata.key(),
+                    ctx.accounts.master_edition.key(),
+                    ctx.accounts.owner.key(),
+                    ctx.accounts.metadata.key(),
                 ],
                 data: vec![],
             }
@@ -137,9 +135,9 @@ pub mod nft_style_two {
         );
 
         ctx.accounts.metadata.set_inner(Metadata {
-            name: name.clone(),
-            symbol: symbol.clone(),
-            uri: uri.clone(),
+            name,
+            symbol,
+            uri,
             owner: *ctx.accounts.owner.key,
         });
         ctx.accounts.edition.set_inner(Edition {
@@ -153,11 +151,11 @@ pub mod nft_style_two {
                 authority: ctx.accounts.owner.key(),
                 asset_id: ctx.accounts.edition.key(),
                 pubkeys: vec![
-                    ctx.accounts.collection.key().clone(),
-                    ctx.accounts.edition_metadata.key().clone(),
-                    ctx.accounts.edition.key().clone(),
-                    ctx.accounts.owner.key().clone(),
-                    ctx.accounts.metadata.key().clone(),
+                    ctx.accounts.collection.key(),
+                    ctx.accounts.edition_metadata.key(),
+                    ctx.accounts.edition.key(),
+                    ctx.accounts.owner.key(),
+                    ctx.accounts.metadata.key(),
                 ],
                 data: vec![],
             }
@@ -167,11 +165,11 @@ pub mod nft_style_two {
                 authority: ctx.accounts.owner.key(),
                 asset_id: ctx.accounts.metadata.key(),
                 pubkeys: vec![
-                    ctx.accounts.collection.key().clone(),
-                    ctx.accounts.edition_metadata.key().clone(),
-                    ctx.accounts.edition.key().clone(),
-                    ctx.accounts.owner.key().clone(),
-                    ctx.accounts.metadata.key().clone(),
+                    ctx.accounts.collection.key(),
+                    ctx.accounts.edition_metadata.key(),
+                    ctx.accounts.edition.key(),
+                    ctx.accounts.owner.key(),
+                    ctx.accounts.metadata.key(),
                 ],
                 data: vec![],
             }
@@ -185,13 +183,13 @@ pub mod nft_style_two {
 
         emit_cpi!({
             CudUpdate {
-                asset_id: ctx.accounts.metadata.key().clone(),
-                authority: ctx.accounts.dest.key().clone(),
+                asset_id: ctx.accounts.metadata.key(),
+                authority: ctx.accounts.dest.key(),
                 pubkeys: vec![
-                    ctx.accounts.collection.key().clone(),
-                    ctx.accounts.edition.key().clone(),
-                    ctx.accounts.owner.key().clone(),
-                    ctx.accounts.metadata.key().clone(),
+                    ctx.accounts.collection.key(),
+                    ctx.accounts.edition.key(),
+                    ctx.accounts.owner.key(),
+                    ctx.accounts.metadata.key(),
                 ],
                 data: vec![],
             }
@@ -203,14 +201,14 @@ pub mod nft_style_two {
     pub fn burn(ctx: Context<BurnMe>) -> Result<()> {
         emit_cpi!({
             CudDelete {
-                asset_id: ctx.accounts.metadata.key().clone(),
+                asset_id: ctx.accounts.metadata.key(),
             }
         });
 
         Ok(())
     }
 
-    pub fn get_asset_data(ctx: Context<GetAssetDataAccounts>, data: Vec<u8>) -> Result<()> {
+    pub fn get_asset_data(ctx: Context<GetAssetDataAccounts>, _data: Vec<u8>) -> Result<()> {
         let data = ctx.accounts.asset_id.try_borrow_mut_data()?;
 
         let account_disc = &data[0..8];
@@ -243,7 +241,7 @@ pub mod nft_style_two {
         } else {
             "".to_string()
         };
-        anchor_lang::solana_program::program::set_return_data(&json_data.as_bytes());
+        anchor_lang::solana_program::program::set_return_data(json_data.as_bytes());
         Ok(())
     }
 }

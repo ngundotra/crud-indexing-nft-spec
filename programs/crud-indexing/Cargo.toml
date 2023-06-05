@@ -1,12 +1,12 @@
 [package]
-name = "nft-style-one"
+name = "crud-indexing"
 version = "0.1.0"
 description = "Created with Anchor"
 edition = "2021"
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "nft_style_one"
+name = "crud_indexing"
 
 [features]
 no-entrypoint = []
@@ -17,6 +17,6 @@ default = []
 
 [dependencies]
 anchor-lang = { git = "https://github.com/ngundotra/anchor", branch = "events", features=["event-cpi"]}
-bs58 = "0.5.0"
+bs58-pubkey = { version = "0.1.0", path = "../../bs58-pubkey" }
 serde = { version = "1.0.163", features = ["derive"] }
 serde_json = "1.0"

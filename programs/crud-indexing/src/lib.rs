@@ -1,15 +1,14 @@
 use anchor_lang::prelude::*;
 use anchor_lang::Discriminator;
-use serde::{self, Deserialize, Deserializer, Serialize, Serializer};
+use serde::{self, Serialize};
 use serde_json;
 
-mod bs58_pubkey;
 use bs58_pubkey::serde_pubkey;
 
 declare_id!("3YtbN69K6qkLsc3nWCPrzSkyNmwzF5uRppmfm9FyYz4k");
 
 #[program]
-pub mod nft_style_one {
+pub mod crud_indexing {
     use super::*;
 
     pub fn init_collection(ctx: Context<InitCollection>, num_items: u32) -> Result<()> {
@@ -30,7 +29,7 @@ pub mod nft_style_one {
 
     pub fn mint(
         ctx: Context<MintMe>,
-        collection_num: u32,
+        _collection_num: u32,
         name: String,
         symbol: String,
         uri: String,
@@ -57,7 +56,7 @@ pub mod nft_style_one {
         Ok(())
     }
 
-    pub fn transfer(ctx: Context<TransferMe>, collection_num: u32) -> Result<()> {
+    pub fn transfer(ctx: Context<TransferMe>, _collection_num: u32) -> Result<()> {
         ctx.accounts.metadata.owner = *ctx.accounts.owner.key;
 
         emit_cpi!({
@@ -76,7 +75,7 @@ pub mod nft_style_one {
         Ok(())
     }
 
-    pub fn get_asset_data(ctx: Context<GetAssetDataAccounts>, data: Vec<u8>) -> Result<()> {
+    pub fn get_asset_data(ctx: Context<GetAssetDataAccounts>, _data: Vec<u8>) -> Result<()> {
         let data = ctx.accounts.asset_id.try_borrow_mut_data()?;
 
         let account_disc = &data[0..8];

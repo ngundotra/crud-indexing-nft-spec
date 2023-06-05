@@ -1,5 +1,5 @@
 use anchor_lang::*;
-use serde::{self, Deserialize, Deserializer, Serialize, Serializer};
+use serde::{self, Deserializer, Serializer};
 
 /// HACK: in order to render Pubkey as base58 str, we need to implement custom serde
 /// otherwise it would render as array of bytes
