@@ -15,7 +15,7 @@ pub mod nft_style_two {
         collection_name: String,
         collection_symbol: String,
         collection_num_items: u32,
-        edition_name: String,
+        edition_title: String,
         edition_description: String,
         edition_num_versions: u32,
     ) -> Result<()> {
@@ -27,7 +27,7 @@ pub mod nft_style_two {
         });
         ctx.accounts.edition_metadata.set_inner(EditionMetadata {
             authority: *ctx.accounts.owner.key,
-            title: edition_name,
+            title: edition_title,
             description: edition_description,
             num_versions: edition_num_versions,
         });
@@ -178,7 +178,11 @@ pub mod nft_style_two {
         Ok(())
     }
 
-    pub fn transfer(ctx: Context<TransferMe>) -> Result<()> {
+    pub fn transfer(
+        ctx: Context<TransferMe>,
+        _collection_num: u32,
+        _edition_num: u32,
+    ) -> Result<()> {
         ctx.accounts.metadata.owner = *ctx.accounts.owner.key;
 
         emit_cpi!({
@@ -198,7 +202,7 @@ pub mod nft_style_two {
         Ok(())
     }
 
-    pub fn burn(ctx: Context<BurnMe>) -> Result<()> {
+    pub fn burn(ctx: Context<BurnMe>, _collection_num: u32, _edition_num: u32) -> Result<()> {
         emit_cpi!({
             CudDelete {
                 asset_id: ctx.accounts.metadata.key(),
@@ -293,12 +297,20 @@ pub struct MasterEdition {
 
 #[event_cpi]
 #[derive(Accounts)]
+#[instruction(
+    collection_name: String,
+    collection_symbol: String,
+    collection_num_items: u32,
+    edition_title: String,
+    edition_description: String,
+    edition_num_versions: u32,
+)]
 pub struct Initialize<'info> {
     #[account(mut)]
     pub owner: Signer<'info>,
-    #[account(init, payer=owner, space = 8 + 32 + 4)]
+    #[account(init, payer=owner, space = 8 + 32 + 4 + collection_name.len() + 4 + collection_symbol.len() + 4)]
     pub collection: Account<'info, Collection>,
-    #[account(init, payer=owner, space = 8 + 32 + 4)]
+    #[account(init, payer=owner, space = 8 + 32 + 4 + edition_title.len() + 4 + edition_description.len() + 4)]
     pub edition_metadata: Account<'info, EditionMetadata>,
     pub system_program: Program<'info, System>,
 }
@@ -335,12 +347,14 @@ pub struct MintEdition<'info> {
 
 #[event_cpi]
 #[derive(Accounts)]
-#[instruction(collection_num: u32)]
+#[instruction(collection_num: u32, edition_num: u32)]
 pub struct TransferMe<'info> {
     pub owner: Signer<'info>,
     /// CHECK: recipient
     pub dest: AccountInfo<'info>,
     pub collection: Account<'info, Collection>,
+    pub edition_metadata: Account<'info, EditionMetadata>,
+    #[account(mut, seeds = [edition_metadata.key().as_ref(), b"version".as_ref(), &edition_num.to_le_bytes()], bump)]
     pub edition: Account<'info, Edition>,
     #[account(mut, seeds = [collection.key().as_ref(), b"metadata".as_ref(), &collection_num.to_le_bytes()], bump)]
     pub metadata: Account<'info, Metadata>,
@@ -348,10 +362,12 @@ pub struct TransferMe<'info> {
 
 #[event_cpi]
 #[derive(Accounts)]
-#[instruction(collection_num: u32)]
+#[instruction(collection_num: u32, edition_num: u32)]
 pub struct BurnMe<'info> {
     pub owner: Signer<'info>,
     pub collection: Account<'info, Collection>,
+    pub edition_metadata: Account<'info, EditionMetadata>,
+    #[account(mut, seeds = [edition_metadata.key().as_ref(), b"version".as_ref(), &edition_num.to_le_bytes()], bump)]
     pub edition: Account<'info, Edition>,
     #[account(mut, seeds = [collection.key().as_ref(), b"metadata".as_ref(), &collection_num.to_le_bytes()], bump)]
     pub metadata: Account<'info, Metadata>,
