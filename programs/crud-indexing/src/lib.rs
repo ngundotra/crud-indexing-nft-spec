@@ -65,7 +65,7 @@ pub mod crud_indexing {
                 authority: ctx.accounts.dest.key().clone(),
                 pubkeys: vec![
                     ctx.accounts.collection.key().clone(),
-                    ctx.accounts.owner.key().clone(),
+                    ctx.accounts.dest.key().clone(),
                     ctx.accounts.metadata.key().clone(),
                 ],
                 data: vec![],
