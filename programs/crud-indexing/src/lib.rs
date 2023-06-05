@@ -5,7 +5,7 @@ use serde_json;
 
 use bs58_pubkey::serde_pubkey;
 
-declare_id!("3YtbN69K6qkLsc3nWCPrzSkyNmwzF5uRppmfm9FyYz4k");
+declare_id!("HzdXYkZw3589BQMS4JqS85chZH8PFGRZmyqTvEYB1Udh");
 
 #[program]
 pub mod crud_indexing {

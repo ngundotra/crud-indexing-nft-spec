@@ -4,7 +4,7 @@ use serde::{self, Serialize};
 
 use bs58_pubkey::serde_pubkey;
 
-declare_id!("3YtbN69K6qkLsc3nWCPrzSkyNmwzF5uRppmfm9FyYz4k");
+declare_id!("9CB3S1yQhyxf5KFeRa6RYj2Np9qwiUpofZYoDQNKphMo");
 
 #[program]
 pub mod nft_style_two {
