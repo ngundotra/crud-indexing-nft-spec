@@ -812,6 +812,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "nft-marketplace"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+]
+
+[[package]]
 name = "nft-style-two"
 version = "0.1.0"
 dependencies = [
