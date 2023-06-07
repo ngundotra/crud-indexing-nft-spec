@@ -235,12 +235,12 @@ pub mod nft_style_two {
         } else if *account_disc == Edition::DISCRIMINATOR {
             let edition = Edition::try_from_slice(&data[8..data.len()])?;
             let data = serde_json::to_string(&edition).unwrap();
-            msg!("Found collection: {}", &data);
+            msg!("Found edition: {}", &data);
             data
         } else if *account_disc == MasterEdition::DISCRIMINATOR {
             let master_edition = MasterEdition::try_from_slice(&data[8..data.len()])?;
             let data = serde_json::to_string(&master_edition).unwrap();
-            msg!("Found collection: {}", &data);
+            msg!("Found master edition: {}", &data);
             data
         } else {
             "".to_string()
