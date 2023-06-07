@@ -23,6 +23,21 @@ and interacted with via on-chain and off-chain clients using standard instructio
 
 ### Instructions
 
+We aim to combine the best features of [ERC 721](https://eips.ethereum.org/EIPS/eip-721) with the best features of SPL Token.
+
+#### Mint
+TODO
+
+#### Transfer
+TODO
+
+#### Delegate
+
+TODO
+
+#### Burn
+TODO
+
 ### Grouping
 
 When a program issues an NFT, it has a specific ordering of accounts that _must_ be followed.
@@ -46,6 +61,8 @@ AssetGroup {
     data: Vec<u8>
 }
 ```
+
+Other pubkeys may be present in the `AssetGroup`, but are not required for the NFT to be considered valid.
 
 ### Rendering Metadata
 
