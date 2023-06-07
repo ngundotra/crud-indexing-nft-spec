@@ -2,11 +2,11 @@ import * as anchor from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
 import { Client } from "pg";
 
-interface AssetGroup {
+export interface AssetGroup {
   assetId: string;
   authority: string;
   pubkeys: string[];
-  data: string;
+  data: Buffer;
 }
 
 export class GIndexerPg {
@@ -17,31 +17,48 @@ export class GIndexerPg {
   constructor(program: anchor.Program) {
     this.program = program;
     this.programId = program.programId;
-    this.client = {
+    this.client = new Client({
       user: "postgres",
       host: "localhost",
       database: "postgres",
-      password: "password",
-      port: 5432,
-    };
+      password: "your_password",
+      port: 5469,
+    });
     this.client.connect();
   }
 
-  // async fetchAssetsForAuthority(authority: PublicKey) {
-  //   return await this.agRepo
-  //     .search()
-  //     .where("authority")
-  //     .equals(authority.toBase58())
-  //     .returnAll();
-  // }
+  async setupTable() {
+    let initQuery = `CREATE TABLE IF NOT EXISTS program_assets (
+      program_id VARCHAR(255) NOT NULL,
+      asset_id VARCHAR(255) NOT NULL,
+      authority VARCHAR(255) NOT NULL,
+      pubkeys VARCHAR(255)[],
+      data BYTEA,
+      last_updated TIMESTAMP,
+      PRIMARY KEY (program_id, asset_id)
+    );`;
 
-  // async fetchAsset(assetId: PublicKey) {
-  //   return await this.agRepo
-  //     .search()
-  //     .where("assetId")
-  //     .equals(assetId.toBase58())
-  //     .returnFirst();
-  // }
+    await this.client.query(initQuery, (err, res) => {
+      if (err) {
+        console.error(err);
+      }
+    });
+  }
+
+  async fetchAssetsForAuthority(authority: PublicKey) {
+    let query = `SELECT * from program_assets WHERE authority = $1 and program_id = $2`;
+    let values = [authority.toBase58(), this.programId.toBase58()];
+    let results = await this.client.query(query, values);
+    console.log("Fetched authority's assets:", results);
+    return results;
+  }
+
+  async fetchAsset(assetId: PublicKey) {
+    let query = `SELECT * from program_assets WHERE program_id = $2 and asset_id = $3`;
+    let values = [this.programId.toBase58(), assetId.toBase58()];
+    let results = await this.client.query(query, values);
+    console.log("Fetched assets:", results);
+  }
 
   async handleTransaction(tx: anchor.web3.TransactionResponse) {
     let cpiEvents = parseCpiEvents(tx, this.program);
@@ -68,11 +85,11 @@ export class GIndexerPg {
   }
   private async handleCUDUpdate(event: anchor.Event) {
     const data = event.data as CudCreate;
-    await this.upsertAsset(event); // JSON ?
+    await this.upsertAsset(jsonifyAssetGroup(data)); // JSON ?
   }
   private async handleCUDDelete(event: anchor.Event) {
     const data = event.data as CudDelete;
-    await this.deleteAsset(data.assetId);
+    await this.deleteAsset(data.assetId.toBase58());
   }
   async upsertAsset(assetGroup: AssetGroup) {
     const upsertAssetGroupQuery = `
@@ -98,36 +115,41 @@ export class GIndexerPg {
         return;
       }
       console.log("Asset group is successfully upserted");
-      this.client.end();
     });
   }
-  private async deleteAsset(assetGroup: AssetGroup) {
+  private async deleteAsset(assetId: string) {
     const deleteAssetGroupQuery = `
       DELETE FROM program_assets
       WHERE program_id = $1 AND asset_id = $2;
     `;
-    const values = [
-      this.programId,
-      assetGroup.assetId,
-      assetGroup.authority,
-      assetGroup.pubkeys,
-      assetGroup.data,
-      new Date(),
-    ];
+    const values = [this.programId, assetId];
     await this.client.query(deleteAssetGroupQuery, values, (err, res) => {
       if (err) {
         console.error(err);
         return;
       }
-      console.log("Asset group is successfully upserted");
-      this.client.end();
+      console.log("Asset group is successfully deleted");
     });
   }
 
   async clearAll() {
-    await this.agRepo.remove(
-      (await this.agRepo.search().all()).map((a) => a.entityId)
-    );
+    await this.client.query(`TRUNCATE program_assets;`, (err, res) => {
+      if (err) {
+        console.error(err);
+        return;
+      }
+      console.log("Table is successfully truncated");
+    });
+  }
+  async teardown() {
+    await this.client.query(`DROP TABLE program_assets;`, (err, res) => {
+      if (err) {
+        console.error(err);
+        return;
+      }
+      console.log("Table is successfully dropped");
+    });
+    this.client.end();
   }
 }
 
@@ -148,17 +170,14 @@ function jsonifyAssetGroup(data: IAssetGroup) {
     assetId: data.assetId.toString(),
     authority: data.authority.toString(),
     pubkeys: data.pubkeys.map((key) => key.toString()),
-    data: anchor.utils.bytes.base64.encode(data.data),
+    data: data.data,
   };
 }
 
 export async function createGIndexer(program: anchor.Program) {
-  /* pulls the Redis URL from .env */
-  const url = process.env.REDIS_URL;
-
-  /* create and open the Redis OM Client */
-  const client = await new Client().open(url);
-  return GIndexerPg.fromClient(program, client);
+  let gIndexer = new GIndexerPg(program);
+  await gIndexer.setupTable();
+  return gIndexer;
 }
 
 type UniversalIx = {

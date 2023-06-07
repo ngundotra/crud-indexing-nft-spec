@@ -1,21 +1,24 @@
 import * as anchor from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
 
-import { GIndexer, IAssetGroup } from "./gIndexer";
+import { AssetGroup, GIndexerPg, IAssetGroup } from "./gIndexerPg";
+import { sha256 } from "@coral-xyz/anchor/dist/cjs/utils";
 
 export class NFTRpc {
-  gIndexer: GIndexer;
-  constructor(gIndexer: GIndexer) {
+  gIndexer: GIndexerPg;
+  constructor(gIndexer: GIndexerPg) {
     this.gIndexer = gIndexer;
   }
 
   async fetchNFT(assetId: PublicKey) {
-    let assetGroup = await this.gIndexer.agRepo
-      .search()
-      .where("assetId")
-      .equals(assetId.toBase58())
-      .returnFirst();
-    let renderedAsset = assetGroup.toJSON();
+    let asset = this.gIndexer.fetchAsset(assetId);
+    // let assetGroup = await this.gIndexer.agRepo
+    //   .search()
+    //   .where("assetId")
+    //   .equals(assetId.toBase58())
+    //   .returnFirst();
+    // let renderedAsset = assetGroup.toJSON();
+    let renderedAsset = asset as any;
     let iasset: IAssetGroup = {
       assetId: new PublicKey(renderedAsset.assetId),
       authority: new PublicKey(renderedAsset.authority),
@@ -26,14 +29,19 @@ export class NFTRpc {
     return await getAssetData(iasset as IAssetGroup, this.gIndexer.program);
   }
 
-  async fetchNFTsForAuthority(authority: PublicKey) {
-    return await this.gIndexer.agRepo
-      .search()
-      .where("authority")
-      .equals(authority.toBase58())
-      .and("pubkeys")
-      .contains(authority.toBase58())
-      .returnAll();
+  async fetchNFTsForAuthority(authority: PublicKey): Promise<AssetGroup[]> {
+    // return await this.gIndexer.agRepo
+    //   .search()
+    //   .where("authority")
+    //   .equals(authority.toBase58())
+    //   .and("pubkeys")
+    //   .contains(authority.toBase58())
+    //   .returnAll();
+
+    // TODO: fix
+    let selectAssetGroupQuery = `SELECT * FROM program_assets WHERE pubkeys @> ARRAY[$1]`;
+    let results = await this.gIndexer.client.query(selectAssetGroupQuery);
+    return results.rows as AssetGroup[];
   }
 
   /**
@@ -42,16 +50,27 @@ export class NFTRpc {
    * @param collection
    * @returns
    */
-  async fetchNFTsinCollection(collection: PublicKey) {
-    // Ideally we'd search that **only** the first key is the collection
-    return await this.gIndexer.agRepo
-      .search()
-      .where("pubkeys")
-      .contains(collection.toBase58())
-      .and("assetId")
-      .not.equals(collection.toBase58())
-      .returnAll();
+  async fetchNFTsinCollection(collection: PublicKey): Promise<AssetGroup[]> {
+    // Collections are defined by
+    let selectAssetGroupQuery = `SELECT * FROM program_assets WHERE COALESCE(pubkeys[1], '') = $1 and data[1:8] = $2;`;
+    let values = [collection.toBase58(), getCollectionDiscriminator()];
+    let result = await this.gIndexer.client.query(
+      selectAssetGroupQuery,
+      values
+    );
+    console.log("Fetched collection:", result);
+
+    return result.rows as AssetGroup[];
   }
+}
+
+function getCollectionDiscriminator() {
+  let disc = Buffer.from(
+    anchor.utils.sha256.hash("srfc19:collection"),
+    "hex"
+  ).slice(0, 8);
+  console.log("collection disc", disc);
+  return disc;
 }
 
 export async function getAssetData(

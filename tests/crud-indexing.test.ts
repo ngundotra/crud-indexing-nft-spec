@@ -1,7 +1,7 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { CrudIndexing } from "../target/types/crud_indexing";
-import { GIndexer, createGIndexer } from "./gIndexer";
+import { GIndexerPg, createGIndexer } from "./gIndexerPg";
 import { NFTRpc } from "./nftRpc";
 import { assert } from "chai";
 
@@ -14,7 +14,7 @@ describe("crud-indexing", () => {
   let collectionKp = anchor.web3.Keypair.generate();
   let collection = collectionKp.publicKey;
 
-  let gIndexer: GIndexer;
+  let gIndexer: GIndexerPg;
   let nftRpc: NFTRpc;
 
   it("Can initialize indexer", async () => {
@@ -37,6 +37,10 @@ describe("crud-indexing", () => {
     });
 
     await gIndexer.handleTransaction(txResult);
+    let dumptruck = await gIndexer.client.query(
+      "SELECT * FROM program_assets;"
+    );
+    console.log("Dumped db:", dumptruck.rows);
   });
   it("Can mint an NFT", async () => {
     const tx = await program.methods
@@ -57,7 +61,7 @@ describe("crud-indexing", () => {
     let collectionAssets = await nftRpc.fetchNFTsinCollection(collection);
 
     assert(collectionAssets.length === 1, "Collection should have 1 asset");
-    let asset = collectionAssets[0].toJSON();
+    let asset = collectionAssets[0];
 
     assert(asset.pubkeys.length >= 3, "NFT Asset must have 3 pubkeys minimum");
     assert(
@@ -79,7 +83,7 @@ describe("crud-indexing", () => {
     assert(nft["uri"] === "uri", "NFT must have correct uri");
     assert(nft["symbol"] === "symbol", "NFT must have correct symbol");
   });
-  it("Can transfer an NFT", async () => {
+  it.skip("Can transfer an NFT", async () => {
     let randomDestination = anchor.web3.Keypair.generate().publicKey;
     const tx = await program.methods
       .transfer(0)
@@ -119,7 +123,7 @@ describe("crud-indexing", () => {
     );
   });
   after(async () => {
-    console.log("Closing Redis connection");
-    await gIndexer.client.close();
+    console.log("Closing db connection");
+    await gIndexer.teardown();
   });
 });

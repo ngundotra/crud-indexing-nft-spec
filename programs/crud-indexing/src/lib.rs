@@ -16,12 +16,14 @@ pub mod crud_indexing {
         ctx.accounts.collection.num_items = num_items;
 
         // Issue a collection
+        let disc = anchor_lang::solana_program::hash::hash(b"srfc19:collection").try_to_vec()?;
+        let data = disc[0..8].to_vec();
         emit_cpi!({
             CudCreate {
                 authority: ctx.accounts.owner.key(),
                 asset_id: ctx.accounts.collection.key(),
                 pubkeys: vec![ctx.accounts.collection.key().clone()],
-                data: vec![],
+                data: data,
             }
         });
         Ok(())
