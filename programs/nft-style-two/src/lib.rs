@@ -104,6 +104,7 @@ pub mod nft_style_two {
                 asset_id: ctx.accounts.metadata.key(),
                 pubkeys: vec![
                     ctx.accounts.collection.key(),
+                    ctx.accounts.owner.key(),
                     ctx.accounts.edition_metadata.key(),
                     ctx.accounts.master_edition.key(),
                     ctx.accounts.owner.key(),
@@ -167,6 +168,7 @@ pub mod nft_style_two {
                 asset_id: ctx.accounts.metadata.key(),
                 pubkeys: vec![
                     ctx.accounts.collection.key(),
+                    ctx.accounts.owner.key(),
                     ctx.accounts.edition_metadata.key(),
                     ctx.accounts.edition.key(),
                     ctx.accounts.owner.key(),
@@ -184,7 +186,7 @@ pub mod nft_style_two {
         _collection_num: u32,
         _edition_num: u32,
     ) -> Result<()> {
-        ctx.accounts.metadata.owner = *ctx.accounts.owner.key;
+        ctx.accounts.metadata.owner = *ctx.accounts.dest.key;
 
         emit_cpi!({
             CudUpdate {
@@ -192,6 +194,7 @@ pub mod nft_style_two {
                 authority: ctx.accounts.dest.key(),
                 pubkeys: vec![
                     ctx.accounts.collection.key(),
+                    ctx.accounts.dest.key(),
                     ctx.accounts.edition.key(),
                     ctx.accounts.owner.key(),
                     ctx.accounts.metadata.key(),

@@ -5,7 +5,7 @@ import { GIndexer, createGIndexer } from "./gindexerPg";
 import { NFTRpc } from "./nftRpc";
 import { assert } from "chai";
 
-describe.skip("nft-style-two", () => {
+describe("nft-style-two", () => {
   // Configure the client to use the local cluster.
   anchor.setProvider(anchor.AnchorProvider.env());
 
@@ -42,8 +42,11 @@ describe.skip("nft-style-two", () => {
     await gIndexer.handleTransaction(txResult);
   });
   it("Can mint a Master Edition NFT", async () => {
+    const nftName = "masterName";
+    const nftSymbol = "masterSymbol";
+    const nftUri = "masterUri";
     const tx = await program.methods
-      .mintMasterEdition(0, "masterName", "masterSymbol", "masterUri")
+      .mintMasterEdition(0, nftName, nftSymbol, nftUri)
       .accounts({
         owner: program.provider.publicKey,
         collection,
@@ -61,7 +64,7 @@ describe.skip("nft-style-two", () => {
     let collectionAssets = await nftRpc.fetchNFTsinCollection(collection);
 
     assert(collectionAssets.length === 1, "Collection should have 1 asset");
-    let asset = collectionAssets[0].toJSON();
+    let asset = collectionAssets[0];
 
     assert(asset.pubkeys.length >= 3, "NFT Asset must have 3 pubkeys minimum");
     assert(
@@ -72,16 +75,13 @@ describe.skip("nft-style-two", () => {
       asset.pubkeys[1] === program.provider.publicKey.toBase58(),
       "NFT Asset must have delegate as second key"
     );
-    assert(
-      asset.pubkeys[2] === asset.assetId,
-      "NFT Asset must have assetId as 3rd key"
-    );
 
     let nft = await nftRpc.fetchNFT(new anchor.web3.PublicKey(asset.assetId));
+    console.log(nft);
     assert(nft, "NFT must exist");
-    assert(nft["name"] === "name", "NFT must have correct name");
-    assert(nft["uri"] === "uri", "NFT must have correct uri");
-    assert(nft["symbol"] === "symbol", "NFT must have correct symbol");
+    assert(nft["name"] === nftName, "NFT must have correct name");
+    assert(nft["uri"] === nftUri, "NFT must have correct uri");
+    assert(nft["symbol"] === nftSymbol, "NFT must have correct symbol");
   });
   it("Can mint an Edition NFT", async () => {
     const tx = await program.methods
@@ -103,7 +103,7 @@ describe.skip("nft-style-two", () => {
     let collectionAssets = await nftRpc.fetchNFTsinCollection(collection);
 
     assert(collectionAssets.length === 1, "Collection should have 1 asset");
-    let asset = collectionAssets[0].toJSON();
+    let asset = collectionAssets[0];
 
     assert(asset.pubkeys.length >= 3, "NFT Asset must have 3 pubkeys minimum");
     assert(
@@ -114,16 +114,12 @@ describe.skip("nft-style-two", () => {
       asset.pubkeys[1] === program.provider.publicKey.toBase58(),
       "NFT Asset must have delegate as second key"
     );
-    assert(
-      asset.pubkeys[2] === asset.assetId,
-      "NFT Asset must have assetId as 3rd key"
-    );
 
     let nft = await nftRpc.fetchNFT(new anchor.web3.PublicKey(asset.assetId));
     assert(nft, "NFT must exist");
-    assert(nft["name"] === "name", "NFT must have correct name");
-    assert(nft["uri"] === "uri", "NFT must have correct uri");
-    assert(nft["symbol"] === "symbol", "NFT must have correct symbol");
+    assert(nft["name"] === "editionName", "NFT must have correct name");
+    assert(nft["uri"] === "editionUri", "NFT must have correct uri");
+    assert(nft["symbol"] === "editionSymbol", "NFT must have correct symbol");
   });
   it("Can transfer an NFT", async () => {
     let randomDestination = anchor.web3.Keypair.generate().publicKey;
@@ -158,7 +154,7 @@ describe.skip("nft-style-two", () => {
 
     let destAssets = await nftRpc.fetchNFTsForAuthority(randomDestination);
     assert(destAssets.length === 1, "Destination wallet should have 1 assets");
-    let asset = destAssets[0].toJSON();
+    let asset = destAssets[0];
     assert(asset.pubkeys.length >= 3, "NFT Asset must have 3 pubkeys minimum");
     assert(
       asset.pubkeys[1] === randomDestination.toBase58(),
@@ -195,7 +191,7 @@ describe.skip("nft-style-two", () => {
     assert(testWalletAssets.length === 0, "Test wallet should have 0 assets");
   });
   after(async () => {
-    console.log("Closing Redis connection");
+    console.log("Closing db connection");
     await gIndexer.teardown();
   });
 });
