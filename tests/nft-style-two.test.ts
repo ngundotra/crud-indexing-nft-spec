@@ -1,7 +1,7 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { NftStyleTwo } from "../target/types/nft_style_two";
-import { GIndexer, createGIndexer } from "./gIndexerPg";
+import { GIndexer, createGIndexer } from "./gindexerPg";
 import { NFTRpc } from "./nftRpc";
 import { assert } from "chai";
 

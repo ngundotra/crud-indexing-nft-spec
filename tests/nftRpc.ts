@@ -1,7 +1,7 @@
 import * as anchor from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
 
-import { AssetGroup, GIndexerPg, IAssetGroup, PGAsset } from "./gIndexerPg";
+import { AssetGroup, GIndexer, IAssetGroup, PGAsset } from "./gindexerPg";
 
 function pgAssetToAssetGroup(pgAsset: PGAsset): AssetGroup {
   return {
@@ -13,8 +13,8 @@ function pgAssetToAssetGroup(pgAsset: PGAsset): AssetGroup {
 }
 
 export class NFTRpc {
-  gIndexer: GIndexerPg;
-  constructor(gIndexer: GIndexerPg) {
+  gIndexer: GIndexer;
+  constructor(gIndexer: GIndexer) {
     this.gIndexer = gIndexer;
   }
 
