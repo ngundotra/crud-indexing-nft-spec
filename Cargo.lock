@@ -806,6 +806,17 @@ name = "nft-events"
 version = "0.1.0"
 dependencies = [
  "anchor-lang",
+ "nft-events-macros",
+]
+
+[[package]]
+name = "nft-events-macros"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
 ]
 
 [[package]]

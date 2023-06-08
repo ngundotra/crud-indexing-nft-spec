@@ -1,6 +1,10 @@
 use anchor_lang::prelude::*;
 use anchor_lang::Discriminator;
-use nft_events::{get_collection_discriminator, get_metadata_discriminator};
+use nft_events::{
+    emit_create_nft_collection, emit_create_nft_metadata, emit_update_nft_collection,
+    emit_update_nft_metadata, get_collection_discriminator, get_metadata_discriminator,
+    NftCollectionAsset, NftMetadataAsset,
+};
 use serde::{self, Serialize};
 use serde_json;
 
@@ -10,6 +14,7 @@ declare_id!("HzdXYkZw3589BQMS4JqS85chZH8PFGRZmyqTvEYB1Udh");
 
 #[program]
 pub mod nft_style_one {
+
     use super::*;
 
     pub fn init_collection(ctx: Context<InitCollection>, num_items: u32) -> Result<()> {
@@ -17,13 +22,11 @@ pub mod nft_style_one {
         ctx.accounts.collection.num_items = num_items;
 
         // Issue a collection
-        emit_cpi!({
-            CudCreate {
-                authority: ctx.accounts.owner.key(),
-                asset_id: ctx.accounts.collection.key(),
-                pubkeys: vec![ctx.accounts.collection.key().clone()],
-                data: get_collection_discriminator()?,
-            }
+        emit_create_nft_collection!(NftCollectionAsset {
+            authority: ctx.accounts.owner.key(),
+            asset_id: ctx.accounts.collection.key(),
+            pubkeys: vec![ctx.accounts.collection.key().clone()],
+            data: vec![],
         });
         Ok(())
     }
@@ -41,17 +44,13 @@ pub mod nft_style_one {
         ctx.accounts.metadata.owner = *ctx.accounts.owner.key;
 
         // Issue a metadata
-        emit_cpi!({
-            CudCreate {
-                authority: ctx.accounts.owner.key(),
-                asset_id: ctx.accounts.metadata.key(),
-                pubkeys: vec![
-                    ctx.accounts.collection.key().clone(),
-                    ctx.accounts.owner.key().clone(),
-                    ctx.accounts.metadata.key().clone(),
-                ],
-                data: get_metadata_discriminator()?,
-            }
+        emit_create_nft_metadata!(NftMetadataAsset {
+            authority: ctx.accounts.owner.key(),
+            asset_id: ctx.accounts.metadata.key(),
+            collection: ctx.accounts.collection.key().clone(),
+            delegate: ctx.accounts.owner.key().clone(),
+            pubkeys: vec![],
+            data: vec![],
         });
 
         Ok(())
@@ -60,17 +59,13 @@ pub mod nft_style_one {
     pub fn transfer(ctx: Context<TransferMe>, _collection_num: u32) -> Result<()> {
         ctx.accounts.metadata.owner = *ctx.accounts.owner.key;
 
-        emit_cpi!({
-            CudUpdate {
-                asset_id: ctx.accounts.metadata.key().clone(),
-                authority: ctx.accounts.dest.key().clone(),
-                pubkeys: vec![
-                    ctx.accounts.collection.key().clone(),
-                    ctx.accounts.dest.key().clone(),
-                    ctx.accounts.metadata.key().clone(),
-                ],
-                data: get_metadata_discriminator()?,
-            }
+        emit_update_nft_metadata!(NftMetadataAsset {
+            authority: ctx.accounts.dest.key(),
+            asset_id: ctx.accounts.metadata.key(),
+            collection: ctx.accounts.collection.key().clone(),
+            delegate: ctx.accounts.dest.key().clone(),
+            pubkeys: vec![],
+            data: vec![],
         });
 
         Ok(())
