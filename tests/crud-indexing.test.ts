@@ -1,7 +1,7 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { CrudIndexing } from "../target/types/crud_indexing";
-import { GIndexerPg, createGIndexer } from "./gIndexerPg";
+import { GIndexer, createGIndexer } from "./gIndexerPg";
 import { NFTRpc } from "./nftRpc";
 import { assert } from "chai";
 
@@ -14,7 +14,7 @@ describe("crud-indexing", () => {
   let collectionKp = anchor.web3.Keypair.generate();
   let collection = collectionKp.publicKey;
 
-  let gIndexer: GIndexerPg;
+  let gIndexer: GIndexer;
   let nftRpc: NFTRpc;
 
   it("Can initialize indexer", async () => {
@@ -38,7 +38,6 @@ describe("crud-indexing", () => {
 
     await gIndexer.handleTransaction(txResult);
     let collections = await nftRpc.fetchCollections();
-    console.log("Collections", collections[0], collection.toBase58());
     assert(collections.length === 1, "Should have 1 collection");
     assert(
       collections[0].assetId === collection.toBase58(),

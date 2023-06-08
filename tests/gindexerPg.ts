@@ -17,7 +17,10 @@ export type PGAsset = {
   data: Buffer;
 };
 
-export class GIndexerPg {
+/**
+ * Postgres-backed General Asset Indexer
+ */
+export class GIndexer {
   program: anchor.Program;
   programId: PublicKey;
   client: Client;
@@ -57,7 +60,6 @@ export class GIndexerPg {
     let query = `SELECT * from program_assets WHERE authority = $1 and program_id = $2`;
     let values = [authority.toBase58(), this.programId.toBase58()];
     let results = await this.client.query(query, values);
-    console.log("Fetched authority's assets:", results);
     return results;
   }
 
@@ -65,7 +67,6 @@ export class GIndexerPg {
     let query = `SELECT * from program_assets WHERE program_id = $1 and asset_id = $2`;
     let values = [this.programId.toBase58(), assetId.toBase58()];
     let results = await this.client.query(query, values);
-    console.log("Fetched assets:", results.rows[0]);
     return results.rows[0] as PGAsset;
   }
 
@@ -184,7 +185,7 @@ function jsonifyAssetGroup(data: IAssetGroup) {
 }
 
 export async function createGIndexer(program: anchor.Program) {
-  let gIndexer = new GIndexerPg(program);
+  let gIndexer = new GIndexer(program);
   await gIndexer.setupTable();
   return gIndexer;
 }

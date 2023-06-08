@@ -22,7 +22,6 @@ export class NFTRpc {
     let query = `SELECT * FROM program_assets
       WHERE program_id = $1
       AND SUBSTRING(data FROM 1 FOR 8) = $2;`;
-    console.log("Collection disc:", getCollectionDiscriminator());
     let values = [
       this.gIndexer.programId.toBase58(),
       getCollectionDiscriminator(),
@@ -45,15 +44,6 @@ export class NFTRpc {
   }
 
   async fetchNFTsForAuthority(authority: PublicKey): Promise<AssetGroup[]> {
-    // return await this.gIndexer.agRepo
-    //   .search()
-    //   .where("authority")
-    //   .equals(authority.toBase58())
-    //   .and("pubkeys")
-    //   .contains(authority.toBase58())
-    //   .returnAll();
-
-    // TODO: fix
     let selectAssetGroupQuery = `SELECT * FROM program_assets WHERE 
       program_id = $1 AND authority = $2 AND SUBSTRING(data FROM 1 FOR 8) = $3;`;
     let values = [

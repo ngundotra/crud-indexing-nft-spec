@@ -1,7 +1,7 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { NftStyleTwo } from "../target/types/nft_style_two";
-import { GIndexer, createGIndexer } from "./gIndexer";
+import { GIndexer, createGIndexer } from "./gIndexerPg";
 import { NFTRpc } from "./nftRpc";
 import { assert } from "chai";
 
@@ -196,6 +196,6 @@ describe.skip("nft-style-two", () => {
   });
   after(async () => {
     console.log("Closing Redis connection");
-    await gIndexer.client.close();
+    await gIndexer.teardown();
   });
 });
