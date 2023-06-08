@@ -466,17 +466,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "crud-indexing"
-version = "0.1.0"
-dependencies = [
- "anchor-lang",
- "bs58-pubkey",
- "nft-events",
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "crunchy"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -817,6 +806,17 @@ name = "nft-events"
 version = "0.1.0"
 dependencies = [
  "anchor-lang",
+]
+
+[[package]]
+name = "nft-style-one"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+ "bs58-pubkey",
+ "nft-events",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

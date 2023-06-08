@@ -1,6 +1,6 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
-import { CrudIndexing } from "../target/types/crud_indexing";
+import { NftStyleOne } from "../target/types/nft_style_one";
 import { GIndexer, createGIndexer } from "./gIndexerPg";
 import { NFTRpc } from "./nftRpc";
 import { assert } from "chai";
@@ -9,7 +9,7 @@ describe("crud-indexing", () => {
   // Configure the client to use the local cluster.
   anchor.setProvider(anchor.AnchorProvider.env());
 
-  const program = anchor.workspace.CrudIndexing as Program<CrudIndexing>;
+  const program = anchor.workspace.NftStyleOne as Program<NftStyleOne>;
 
   let collectionKp = anchor.web3.Keypair.generate();
   let collection = collectionKp.publicKey;

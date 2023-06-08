@@ -1,5 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_lang::Discriminator;
+use nft_events::{get_collection_discriminator, get_metadata_discriminator};
 use serde::{self, Serialize};
 
 use bs58_pubkey::serde_pubkey;
@@ -41,7 +42,7 @@ pub mod nft_style_two {
                     ctx.accounts.collection.key(),
                     ctx.accounts.edition_metadata.key(),
                 ],
-                data: vec![],
+                data: get_collection_discriminator()?,
             }
         });
         emit_cpi!({
@@ -108,7 +109,7 @@ pub mod nft_style_two {
                     ctx.accounts.owner.key(),
                     ctx.accounts.metadata.key(),
                 ],
-                data: vec![],
+                data: get_metadata_discriminator()?,
             }
         });
 
@@ -171,7 +172,7 @@ pub mod nft_style_two {
                     ctx.accounts.owner.key(),
                     ctx.accounts.metadata.key(),
                 ],
-                data: vec![],
+                data: get_metadata_discriminator()?,
             }
         });
 
@@ -195,7 +196,7 @@ pub mod nft_style_two {
                     ctx.accounts.owner.key(),
                     ctx.accounts.metadata.key(),
                 ],
-                data: vec![],
+                data: get_metadata_discriminator()?,
             }
         });
 

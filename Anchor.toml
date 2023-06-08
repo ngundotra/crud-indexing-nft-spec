@@ -2,7 +2,7 @@
 seeds = true
 skip-lint = false
 [programs.localnet]
-crud_indexing = "HzdXYkZw3589BQMS4JqS85chZH8PFGRZmyqTvEYB1Udh"
+nft_style_one = "HzdXYkZw3589BQMS4JqS85chZH8PFGRZmyqTvEYB1Udh"
 nft_style_two = "9CB3S1yQhyxf5KFeRa6RYj2Np9qwiUpofZYoDQNKphMo"
 
 [registry]

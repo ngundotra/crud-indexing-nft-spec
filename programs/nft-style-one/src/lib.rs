@@ -9,7 +9,7 @@ use bs58_pubkey::serde_pubkey;
 declare_id!("HzdXYkZw3589BQMS4JqS85chZH8PFGRZmyqTvEYB1Udh");
 
 #[program]
-pub mod crud_indexing {
+pub mod nft_style_one {
     use super::*;
 
     pub fn init_collection(ctx: Context<InitCollection>, num_items: u32) -> Result<()> {
