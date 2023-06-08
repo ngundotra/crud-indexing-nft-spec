@@ -37,10 +37,13 @@ describe("crud-indexing", () => {
     });
 
     await gIndexer.handleTransaction(txResult);
-    let dumptruck = await gIndexer.client.query(
-      "SELECT * FROM program_assets;"
+    let collections = await nftRpc.fetchCollections();
+    console.log("Collections", collections[0], collection.toBase58());
+    assert(collections.length === 1, "Should have 1 collection");
+    assert(
+      collections[0].assetId === collection.toBase58(),
+      "Should have correct collection id ${collections[0]}"
     );
-    console.log("Dumped db:", dumptruck.rows);
   });
   it("Can mint an NFT", async () => {
     const tx = await program.methods
@@ -74,7 +77,7 @@ describe("crud-indexing", () => {
     );
     assert(
       asset.pubkeys[2] === asset.assetId,
-      "NFT Asset must have assetId as 3rd key"
+      `NFT Asset must have assetId as 3rd key ${asset.pubkeys[2]} vs expected ${asset.assetId}`
     );
 
     let nft = await nftRpc.fetchNFT(new anchor.web3.PublicKey(asset.assetId));
@@ -83,7 +86,7 @@ describe("crud-indexing", () => {
     assert(nft["uri"] === "uri", "NFT must have correct uri");
     assert(nft["symbol"] === "symbol", "NFT must have correct symbol");
   });
-  it.skip("Can transfer an NFT", async () => {
+  it("Can transfer an NFT", async () => {
     let randomDestination = anchor.web3.Keypair.generate().publicKey;
     const tx = await program.methods
       .transfer(0)
@@ -115,7 +118,8 @@ describe("crud-indexing", () => {
 
     let destAssets = await nftRpc.fetchNFTsForAuthority(randomDestination);
     assert(destAssets.length === 1, "Destination wallet should have 1 assets");
-    let asset = destAssets[0].toJSON();
+
+    let asset = destAssets[0];
     assert(asset.pubkeys.length >= 3, "NFT Asset must have 3 pubkeys minimum");
     assert(
       asset.pubkeys[1] === randomDestination.toBase58(),

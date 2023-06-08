@@ -9,6 +9,14 @@ export interface AssetGroup {
   data: Buffer;
 }
 
+export type PGAsset = {
+  program_id: string;
+  asset_id: string;
+  authority: string;
+  pubkeys: string[];
+  data: Buffer;
+};
+
 export class GIndexerPg {
   program: anchor.Program;
   programId: PublicKey;
@@ -53,11 +61,12 @@ export class GIndexerPg {
     return results;
   }
 
-  async fetchAsset(assetId: PublicKey) {
-    let query = `SELECT * from program_assets WHERE program_id = $2 and asset_id = $3`;
+  async fetchAsset(assetId: PublicKey): Promise<PGAsset> {
+    let query = `SELECT * from program_assets WHERE program_id = $1 and asset_id = $2`;
     let values = [this.programId.toBase58(), assetId.toBase58()];
     let results = await this.client.query(query, values);
-    console.log("Fetched assets:", results);
+    console.log("Fetched assets:", results.rows[0]);
+    return results.rows[0] as PGAsset;
   }
 
   async handleTransaction(tx: anchor.web3.TransactionResponse) {
@@ -102,7 +111,7 @@ export class GIndexerPg {
           last_updated = EXCLUDED.last_updated;
     `;
     const values = [
-      this.programId,
+      this.programId.toBase58(),
       assetGroup.assetId,
       assetGroup.authority,
       assetGroup.pubkeys,
@@ -122,7 +131,7 @@ export class GIndexerPg {
       DELETE FROM program_assets
       WHERE program_id = $1 AND asset_id = $2;
     `;
-    const values = [this.programId, assetId];
+    const values = [this.programId.toBase58(), assetId];
     await this.client.query(deleteAssetGroupQuery, values, (err, res) => {
       if (err) {
         console.error(err);
