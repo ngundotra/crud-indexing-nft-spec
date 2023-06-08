@@ -1,5 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_lang::Discriminator;
+use nft_events::{get_collection_discriminator, get_metadata_discriminator};
 use serde::{self, Serialize};
 use serde_json;
 
@@ -16,14 +17,12 @@ pub mod crud_indexing {
         ctx.accounts.collection.num_items = num_items;
 
         // Issue a collection
-        let disc = anchor_lang::solana_program::hash::hash(b"srfc19:collection").try_to_vec()?;
-        let data = disc[0..8].to_vec();
         emit_cpi!({
             CudCreate {
                 authority: ctx.accounts.owner.key(),
                 asset_id: ctx.accounts.collection.key(),
                 pubkeys: vec![ctx.accounts.collection.key().clone()],
-                data,
+                data: get_collection_discriminator()?,
             }
         });
         Ok(())
@@ -42,8 +41,6 @@ pub mod crud_indexing {
         ctx.accounts.metadata.owner = *ctx.accounts.owner.key;
 
         // Issue a metadata
-        let disc = anchor_lang::solana_program::hash::hash(b"srfc19:metadata").try_to_vec()?;
-        let data = disc[0..8].to_vec();
         emit_cpi!({
             CudCreate {
                 authority: ctx.accounts.owner.key(),
@@ -53,7 +50,7 @@ pub mod crud_indexing {
                     ctx.accounts.owner.key().clone(),
                     ctx.accounts.metadata.key().clone(),
                 ],
-                data,
+                data: get_metadata_discriminator()?,
             }
         });
 
@@ -63,8 +60,6 @@ pub mod crud_indexing {
     pub fn transfer(ctx: Context<TransferMe>, _collection_num: u32) -> Result<()> {
         ctx.accounts.metadata.owner = *ctx.accounts.owner.key;
 
-        let disc = anchor_lang::solana_program::hash::hash(b"srfc19:metadata").try_to_vec()?;
-        let data = disc[0..8].to_vec();
         emit_cpi!({
             CudUpdate {
                 asset_id: ctx.accounts.metadata.key().clone(),
@@ -74,7 +69,7 @@ pub mod crud_indexing {
                     ctx.accounts.dest.key().clone(),
                     ctx.accounts.metadata.key().clone(),
                 ],
-                data,
+                data: get_metadata_discriminator()?,
             }
         });
 
