@@ -471,6 +471,7 @@ version = "0.1.0"
 dependencies = [
  "anchor-lang",
  "bs58-pubkey",
+ "nft-events",
  "serde",
  "serde_json",
 ]
@@ -812,11 +813,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "nft-events"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+]
+
+[[package]]
 name = "nft-style-two"
 version = "0.1.0"
 dependencies = [
  "anchor-lang",
  "bs58-pubkey",
+ "nft-events",
  "serde",
  "serde_json",
 ]

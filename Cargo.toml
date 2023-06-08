@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "bs58-pubkey",
+    "nft-events",
     "programs/*"
 ]
 

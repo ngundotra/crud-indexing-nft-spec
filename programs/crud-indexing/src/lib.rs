@@ -1,5 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_lang::Discriminator;
+use nft_events::{get_collection_discriminator, get_metadata_discriminator};
 use serde::{self, Serialize};
 use serde_json;
 
@@ -21,7 +22,7 @@ pub mod crud_indexing {
                 authority: ctx.accounts.owner.key(),
                 asset_id: ctx.accounts.collection.key(),
                 pubkeys: vec![ctx.accounts.collection.key().clone()],
-                data: vec![],
+                data: get_collection_discriminator()?,
             }
         });
         Ok(())
@@ -49,7 +50,7 @@ pub mod crud_indexing {
                     ctx.accounts.owner.key().clone(),
                     ctx.accounts.metadata.key().clone(),
                 ],
-                data: vec![],
+                data: get_metadata_discriminator()?,
             }
         });
 
@@ -68,7 +69,7 @@ pub mod crud_indexing {
                     ctx.accounts.dest.key().clone(),
                     ctx.accounts.metadata.key().clone(),
                 ],
-                data: vec![],
+                data: get_metadata_discriminator()?,
             }
         });
 

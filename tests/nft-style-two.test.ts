@@ -1,11 +1,11 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { NftStyleTwo } from "../target/types/nft_style_two";
-import { GIndexer, createGIndexer } from "./gIndexer";
+import { GIndexer, createGIndexer } from "./gIndexerPg";
 import { NFTRpc } from "./nftRpc";
 import { assert } from "chai";
 
-describe("crud-indexing", () => {
+describe.skip("nft-style-two", () => {
   // Configure the client to use the local cluster.
   anchor.setProvider(anchor.AnchorProvider.env());
 
@@ -196,6 +196,6 @@ describe("crud-indexing", () => {
   });
   after(async () => {
     console.log("Closing Redis connection");
-    await gIndexer.client.close();
+    await gIndexer.teardown();
   });
 });

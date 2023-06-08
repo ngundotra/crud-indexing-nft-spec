@@ -1,7 +1,7 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { CrudIndexing } from "../target/types/crud_indexing";
-import { GIndexer, createGIndexer } from "./gIndexer";
+import { GIndexer, createGIndexer } from "./gIndexerPg";
 import { NFTRpc } from "./nftRpc";
 import { assert } from "chai";
 
@@ -37,6 +37,12 @@ describe("crud-indexing", () => {
     });
 
     await gIndexer.handleTransaction(txResult);
+    let collections = await nftRpc.fetchCollections();
+    assert(collections.length === 1, "Should have 1 collection");
+    assert(
+      collections[0].assetId === collection.toBase58(),
+      "Should have correct collection id ${collections[0]}"
+    );
   });
   it("Can mint an NFT", async () => {
     const tx = await program.methods
@@ -57,7 +63,7 @@ describe("crud-indexing", () => {
     let collectionAssets = await nftRpc.fetchNFTsinCollection(collection);
 
     assert(collectionAssets.length === 1, "Collection should have 1 asset");
-    let asset = collectionAssets[0].toJSON();
+    let asset = collectionAssets[0];
 
     assert(asset.pubkeys.length >= 3, "NFT Asset must have 3 pubkeys minimum");
     assert(
@@ -70,7 +76,7 @@ describe("crud-indexing", () => {
     );
     assert(
       asset.pubkeys[2] === asset.assetId,
-      "NFT Asset must have assetId as 3rd key"
+      `NFT Asset must have assetId as 3rd key ${asset.pubkeys[2]} vs expected ${asset.assetId}`
     );
 
     let nft = await nftRpc.fetchNFT(new anchor.web3.PublicKey(asset.assetId));
@@ -111,7 +117,8 @@ describe("crud-indexing", () => {
 
     let destAssets = await nftRpc.fetchNFTsForAuthority(randomDestination);
     assert(destAssets.length === 1, "Destination wallet should have 1 assets");
-    let asset = destAssets[0].toJSON();
+
+    let asset = destAssets[0];
     assert(asset.pubkeys.length >= 3, "NFT Asset must have 3 pubkeys minimum");
     assert(
       asset.pubkeys[1] === randomDestination.toBase58(),
@@ -119,7 +126,7 @@ describe("crud-indexing", () => {
     );
   });
   after(async () => {
-    console.log("Closing Redis connection");
-    await gIndexer.client.close();
+    console.log("Closing db connection");
+    await gIndexer.teardown();
   });
 });
