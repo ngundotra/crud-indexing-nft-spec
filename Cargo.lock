@@ -3,6 +3,13 @@
 version = 3
 
 [[package]]
+name = "additional-accounts-request"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+]
+
+[[package]]
 name = "ahash"
 version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -824,6 +831,14 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "nft-instructions"
+version = "0.1.0"
+dependencies = [
+ "additional-accounts-request",
+ "anchor-lang",
 ]
 
 [[package]]

@@ -3,6 +3,8 @@ members = [
     "bs58-pubkey",
     "nft-events",
     "nft-events/syn",
+    "additional-accounts-request",
+    "nft-instructions",
     "programs/*"
 ]
 
