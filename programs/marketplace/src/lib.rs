@@ -41,28 +41,37 @@ pub struct Listing {
 }
 
 #[derive(Accounts)]
-pub struct Swap {
+pub struct Swap<'info> {
+    /// CHECK:
     nft_program_a: AccountInfo<'info>,
+    /// CHECK:
     asset_id_a: AccountInfo<'info>,
     authority_a: Signer<'info>,
+    /// CHECK:
     nft_program_b: AccountInfo<'info>,
+    /// CHECK:
     asset_id_b: AccountInfo<'info>,
     authority_b: Signer<'info>,
 }
 
 #[derive(Accounts)]
 pub struct List<'info> {
+    /// CHECK:
     nft_program: AccountInfo<'info>,
+    /// CHECK:
     asset_id: AccountInfo<'info>,
     authority: Signer<'info>,
-    marketplace_delegate: AccountInfo<'info>,
     marketplace_listing: Account<'info, Listing>,
 }
 
 #[derive(Accounts)]
 pub struct BuyListing<'info> {
+    /// CHECK:
     program: AccountInfo<'info>,
+    /// CHECK:
     asset_id: AccountInfo<'info>,
     authority: Signer<'info>,
+    /// CHECK:
     owner: AccountInfo<'info>,
+    marketplace_listing: Account<'info, Listing>,
 }

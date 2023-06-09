@@ -8,12 +8,15 @@ use nft_events::{
 use serde::{self, Serialize};
 use serde_json;
 
+use additional_accounts_request::{IAccountMeta, PreflightPayload};
 use bs58_pubkey::serde_pubkey;
 
 declare_id!("HzdXYkZw3589BQMS4JqS85chZH8PFGRZmyqTvEYB1Udh");
 
 #[program]
 pub mod nft_style_one {
+
+    use anchor_lang::solana_program::program::set_return_data;
 
     use super::*;
 
@@ -33,20 +36,23 @@ pub mod nft_style_one {
 
     pub fn mint(
         ctx: Context<MintMe>,
-        _collection_num: u32,
+        collection_num: u32,
         name: String,
         symbol: String,
         uri: String,
     ) -> Result<()> {
-        ctx.accounts.metadata.name = name.clone();
-        ctx.accounts.metadata.symbol = symbol.clone();
-        ctx.accounts.metadata.uri = uri.clone();
-        ctx.accounts.metadata.owner = *ctx.accounts.owner.key;
+        ctx.accounts.asset.collection = ctx.accounts.collection.key();
+        ctx.accounts.asset.collection_num = collection_num;
+        ctx.accounts.asset.name = name.clone();
+        ctx.accounts.asset.symbol = symbol.clone();
+        ctx.accounts.asset.uri = uri.clone();
+        ctx.accounts.asset.owner = *ctx.accounts.owner.key;
+        ctx.accounts.asset.delegate = *ctx.accounts.owner.key;
 
         // Issue a metadata
         emit_create_nft_metadata!(NftMetadataAsset {
             authority: ctx.accounts.owner.key(),
-            asset_id: ctx.accounts.metadata.key(),
+            asset_id: ctx.accounts.asset.key(),
             collection: ctx.accounts.collection.key().clone(),
             delegate: ctx.accounts.owner.key().clone(),
             pubkeys: vec![],
@@ -56,14 +62,51 @@ pub mod nft_style_one {
         Ok(())
     }
 
-    pub fn transfer(ctx: Context<TransferMe>, _collection_num: u32) -> Result<()> {
-        ctx.accounts.metadata.owner = *ctx.accounts.owner.key;
+    pub fn preflight_transfer(ctx: Context<ITransfer>) -> Result<()> {
+        let event_authority = Pubkey::find_program_address(
+            &[&ctx.program_id.as_ref(), b"__event_authority"],
+            &ctx.program_id,
+        )
+        .0;
+
+        set_return_data(
+            &PreflightPayload {
+                accounts: vec![
+                    IAccountMeta {
+                        pubkey: ctx.accounts.asset.collection.key(),
+                        signer: false,
+                        writable: false,
+                    },
+                    IAccountMeta {
+                        pubkey: event_authority,
+                        signer: false,
+                        writable: false,
+                    },
+                    IAccountMeta {
+                        pubkey: *ctx.program_id,
+                        signer: false,
+                        writable: false,
+                    },
+                ],
+            }
+            .try_to_vec()
+            .unwrap(),
+        );
+        Ok(())
+    }
+
+    pub fn transfer(ctx: Context<TransferMe>) -> Result<()> {
+        assert!(
+            ctx.accounts.asset.owner == *ctx.accounts.authority.key
+                || ctx.accounts.asset.delegate == *ctx.accounts.authority.key
+        );
+        ctx.accounts.asset.owner = *ctx.accounts.destination.key;
 
         emit_update_nft_metadata!(NftMetadataAsset {
-            authority: ctx.accounts.dest.key(),
-            asset_id: ctx.accounts.metadata.key(),
+            authority: ctx.accounts.destination.key(),
+            asset_id: ctx.accounts.asset.key(),
             collection: ctx.accounts.collection.key().clone(),
-            delegate: ctx.accounts.dest.key().clone(),
+            delegate: ctx.accounts.destination.key().clone(),
             pubkeys: vec![],
             data: vec![],
         });
@@ -98,7 +141,12 @@ pub mod nft_style_one {
 #[account]
 pub struct Metadata {
     #[serde(with = "serde_pubkey")]
+    collection: Pubkey,
+    collection_num: u32,
+    #[serde(with = "serde_pubkey")]
     owner: Pubkey,
+    #[serde(with = "serde_pubkey")]
+    delegate: Pubkey,
     name: String,
     symbol: String,
     uri: String,
@@ -129,21 +177,22 @@ pub struct MintMe<'info> {
     #[account(mut)]
     pub owner: Signer<'info>,
     pub collection: Account<'info, Collection>,
-    #[account(init, payer=owner, space = 8 + 32 + 4 + name.len() + 4 + symbol.len() + 4 + uri.len(), seeds = [collection.key().as_ref(), b"metadata".as_ref(), &collection_num.to_le_bytes()], bump)]
-    pub metadata: Account<'info, Metadata>,
+    #[account(init, payer=owner, space = 8 + 32 + 4 + 32 + 32 + 4 + name.len() + 4 + symbol.len() + 4 + uri.len(), seeds = [collection.key().as_ref(), b"metadata".as_ref(), &collection_num.to_le_bytes()], bump)]
+    pub asset: Account<'info, Metadata>,
     pub system_program: Program<'info, System>,
 }
 
 #[event_cpi]
 #[derive(Accounts)]
-#[instruction(collection_num: u32)]
 pub struct TransferMe<'info> {
-    pub owner: Signer<'info>,
+    /// CHECK:
+    pub owner: AccountInfo<'info>,
     /// CHECK: recipient
-    pub dest: AccountInfo<'info>,
+    pub destination: AccountInfo<'info>,
+    pub authority: Signer<'info>,
+    #[account(mut, seeds = [collection.key().as_ref(), b"metadata".as_ref(), &asset.collection_num.to_le_bytes()], bump)]
+    pub asset: Account<'info, Metadata>,
     pub collection: Account<'info, Collection>,
-    #[account(mut, seeds = [collection.key().as_ref(), b"metadata".as_ref(), &collection_num.to_le_bytes()], bump)]
-    pub metadata: Account<'info, Metadata>,
 }
 
 #[derive(Accounts)]
@@ -173,4 +222,26 @@ pub struct CudUpdate {
 #[event]
 pub struct CudDelete {
     asset_id: Pubkey,
+}
+
+// This is a copy-paste from `additional-accounts-request` crate, needed
+// to make sure that we can deserialize the return data in
+// our typescript client
+#[derive(Debug, Clone, AnchorSerialize, AnchorDeserialize)]
+pub struct ExternalIAccountMeta {
+    pub pubkey: Pubkey,
+    pub signer: bool,
+    pub writable: bool,
+}
+
+/// Interface Preflight
+#[derive(Accounts)]
+pub struct ITransfer<'info> {
+    /// CHECK:
+    pub owner: AccountInfo<'info>,
+    /// CHECK:
+    pub destination: AccountInfo<'info>,
+    pub authority: Signer<'info>,
+    /// CHECK:
+    pub asset: Account<'info, Metadata>,
 }

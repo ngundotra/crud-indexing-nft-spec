@@ -5,7 +5,7 @@ import { GIndexer, createGIndexer } from "./gindexerPg";
 import { NFTRpc } from "./nftRpc";
 import { assert } from "chai";
 
-describe("nft-style-one", () => {
+describe("nft-style-one.e2e", () => {
   // Configure the client to use the local cluster.
   anchor.setProvider(anchor.AnchorProvider.env());
 
@@ -13,6 +13,14 @@ describe("nft-style-one", () => {
 
   let collectionKp = anchor.web3.Keypair.generate();
   let collection = collectionKp.publicKey;
+  let metadata = anchor.web3.PublicKey.findProgramAddressSync(
+    [
+      collection.toBuffer(),
+      Buffer.from("metadata"),
+      Buffer.from(new anchor.BN(0).toArray("le", 4)),
+    ],
+    program.programId
+  )[0];
 
   let gIndexer: GIndexer;
   let nftRpc: NFTRpc;
@@ -49,6 +57,7 @@ describe("nft-style-one", () => {
       .mint(0, "name", "symbol", "uri")
       .accounts({
         owner: program.provider.publicKey,
+        asset: metadata,
         collection,
       })
       .rpc({ commitment: "confirmed" });
@@ -84,11 +93,13 @@ describe("nft-style-one", () => {
   it("Can transfer an NFT", async () => {
     let randomDestination = anchor.web3.Keypair.generate().publicKey;
     const tx = await program.methods
-      .transfer(0)
+      .transfer()
       .accounts({
         owner: program.provider.publicKey,
-        dest: randomDestination,
+        destination: randomDestination,
+        authority: program.provider.publicKey,
         collection,
+        asset: metadata,
       })
       .rpc({ commitment: "confirmed" });
 

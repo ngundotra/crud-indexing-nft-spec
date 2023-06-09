@@ -845,6 +845,7 @@ dependencies = [
 name = "nft-style-one"
 version = "0.1.0"
 dependencies = [
+ "additional-accounts-request",
  "anchor-lang",
  "bs58-pubkey",
  "nft-events",

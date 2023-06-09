@@ -1,13 +1,10 @@
 #![feature(generic_associated_types)]
 use std::collections::HashMap;
 
-pub mod to_target_program;
-use to_target_program::*;
-
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::{
     hash,
-    program::{get_return_data, invoke},
+    program::{get_return_data, invoke, invoke_signed},
 };
 
 #[derive(Debug, Clone, AnchorSerialize, AnchorDeserialize)]
@@ -60,53 +57,7 @@ pub fn get_interface_accounts(program_key: &Pubkey) -> Result<PreflightPayload> 
     Ok(additional_interface_accounts)
 }
 
-// Allows calling `transfer` on the target program.
-// This invokes the preflight function followed by the actual function on the target program
-pub fn call_with_context<
-    'info,
-    C1: ToAccountInfos<'info> + ToAccountMetas + ToTargetProgram<'info, TargetCtx<'info> = C2>,
-    C2: ToAccountInfos<'info> + ToAccountMetas,
->(
-    ix_name: String,
-    ctx: CpiContext<'_, '_, '_, 'info, C1>,
-    args: Vec<u8>,
-    log_info: bool,
-) -> Result<()> {
-    // preflight
-    if log_info {
-        msg!("Preflight");
-    }
-    call_preflight_interface_function(ix_name.clone(), &ctx, &args)?;
-
-    // parse cpi return data
-    if log_info {
-        msg!("Parse return data");
-    }
-    let additional_interface_accounts = get_interface_accounts(&ctx.accounts.to_target_program())?;
-
-    // wrap into target context
-    if log_info {
-        msg!("Convert into target context");
-    }
-    let cpi_ctx: CpiContext<C2> = ctx
-        .accounts
-        .to_target_context(ctx.remaining_accounts.to_vec());
-
-    // execute
-    if log_info {
-        msg!("Execute {}", &ix_name);
-    }
-    call_interface_function(
-        ix_name.clone(),
-        cpi_ctx,
-        &args,
-        additional_interface_accounts,
-        log_info,
-    )?;
-    Ok(())
-}
-
-// This calls the preflight function on the target program
+/// This calls the preflight function on the target program (defined on the ctx)
 pub fn call_preflight_interface_function<'info, T: ToAccountInfos<'info> + ToAccountMetas>(
     function_name: String,
     ctx: &CpiContext<'_, '_, '_, 'info, T>,
@@ -131,8 +82,8 @@ pub fn call_preflight_interface_function<'info, T: ToAccountInfos<'info> + ToAcc
     Ok(())
 }
 
-// This calls the main function on the target program, and passes along the requested
-// account_metas from the preflight function
+/// This calls the main function on the target program, and passes along the requested
+/// account_metas from the preflight function
 pub fn call_interface_function<'info, T: ToAccountInfos<'info> + ToAccountMetas>(
     function_name: String,
     ctx: CpiContext<'_, '_, '_, 'info, T>,
@@ -195,21 +146,19 @@ pub fn call_interface_function<'info, T: ToAccountInfos<'info> + ToAccountMetas>
         });
     } else {
         // execute
-        invoke(&ix, &ix_ais)?;
+        invoke_signed(&ix, &ix_ais, &ctx.signer_seeds)?;
     }
     Ok(())
 }
 
-pub fn call_advanced<
-    'info,
-    C1: ToAccountInfos<'info> + ToAccountMetas + ToTargetProgram<'info, TargetCtx<'info> = C2>,
-    C2: ToAccountInfos<'info> + ToAccountMetas,
->(
+/// Calls an instruction on a program that complies with the additional accounts interface
+///
+/// Expects ctx.remaining accounts to have all possible accounts in order to resolve
+/// the accounts requested from the preflight function
+pub fn call<'info, C1: ToAccountInfos<'info> + ToAccountMetas>(
     ix_name: String,
     ctx: CpiContext<'_, '_, '_, 'info, C1>,
     args: Vec<u8>,
-    preflight_target_program: AccountInfo<'info>,
-    target_program: AccountInfo<'info>,
     log_info: bool,
 ) -> Result<()> {
     // preflight
@@ -222,15 +171,7 @@ pub fn call_advanced<
     if log_info {
         msg!("Parse return data");
     }
-    let additional_interface_accounts = get_interface_accounts(&ctx.accounts.to_target_program())?;
-
-    // wrap into target context
-    if log_info {
-        msg!("Convert into target context");
-    }
-    let cpi_ctx: CpiContext<C2> = ctx
-        .accounts
-        .to_target_context(ctx.remaining_accounts.to_vec());
+    let additional_interface_accounts = get_interface_accounts(ctx.program.key)?;
 
     // execute
     if log_info {
@@ -238,7 +179,7 @@ pub fn call_advanced<
     }
     call_interface_function(
         ix_name.clone(),
-        cpi_ctx,
+        ctx,
         &args,
         additional_interface_accounts,
         log_info,
