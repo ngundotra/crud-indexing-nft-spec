@@ -50,6 +50,6 @@ export async function createAARTransfer<I extends anchor.Idl>(
 ): Promise<anchor.web3.TransactionInstruction> {
   let ix = createInstructionTransfer(program.programId, transfer, true);
   let accounts = await resolveRemainingAccounts(program, [ix]);
-  ix.keys.concat(accounts);
+  ix.keys = ix.keys.concat(accounts);
   return ix;
 }

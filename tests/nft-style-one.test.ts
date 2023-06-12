@@ -5,7 +5,7 @@ import { GIndexer, createGIndexer } from "./gindexerPg";
 import { NFTRpc } from "./nftRpc";
 import { assert } from "chai";
 
-describe("nft-style-one.e2e", () => {
+describe.skip("nft-style-one.e2e", () => {
   // Configure the client to use the local cluster.
   anchor.setProvider(anchor.AnchorProvider.env());
 

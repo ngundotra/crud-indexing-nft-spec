@@ -779,7 +779,9 @@ dependencies = [
 name = "marketplace"
 version = "0.1.0"
 dependencies = [
+ "additional-accounts-request",
  "anchor-lang",
+ "nft-instructions",
 ]
 
 [[package]]

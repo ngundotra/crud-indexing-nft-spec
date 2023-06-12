@@ -63,11 +63,8 @@ pub mod nft_style_one {
     }
 
     pub fn preflight_transfer(ctx: Context<ITransfer>) -> Result<()> {
-        let event_authority = Pubkey::find_program_address(
-            &[&ctx.program_id.as_ref(), b"__event_authority"],
-            &ctx.program_id,
-        )
-        .0;
+        let event_authority =
+            Pubkey::find_program_address(&[b"__event_authority"], &ctx.program_id).0;
 
         set_return_data(
             &PreflightPayload {
@@ -241,7 +238,8 @@ pub struct ITransfer<'info> {
     pub owner: AccountInfo<'info>,
     /// CHECK:
     pub destination: AccountInfo<'info>,
-    pub authority: Signer<'info>,
+    /// CHECK:
+    pub authority: AccountInfo<'info>,
     /// CHECK:
     pub asset: Account<'info, Metadata>,
 }

@@ -132,9 +132,6 @@ pub fn call_interface_function<'info, T: ToAccountInfos<'info> + ToAccountMetas>
 
     if log_info {
         msg!("IX accounts: {:?}", &ix_ais.len());
-    }
-
-    if log_info {
         ix_ais.iter().into_iter().for_each(|ai| {
             msg!(
                 "Account: {:?}, {:?}, {:?}, {:?}",
@@ -144,10 +141,11 @@ pub fn call_interface_function<'info, T: ToAccountInfos<'info> + ToAccountMetas>
                 ai.is_writable
             )
         });
-    } else {
-        // execute
-        invoke_signed(&ix, &ix_ais, &ctx.signer_seeds)?;
+        msg!("Signer seeds: {:?}", &ctx.signer_seeds);
     }
+
+    // execute
+    invoke_signed(&ix, &ix_ais, &ctx.signer_seeds)?;
     Ok(())
 }
 
@@ -163,7 +161,7 @@ pub fn call<'info, C1: ToAccountInfos<'info> + ToAccountMetas>(
 ) -> Result<()> {
     // preflight
     if log_info {
-        msg!("Preflight");
+        msg!("Preflight {}", &ix_name);
     }
     call_preflight_interface_function(ix_name.clone(), &ctx, &args)?;
 
