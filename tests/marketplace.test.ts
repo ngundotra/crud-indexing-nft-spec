@@ -68,8 +68,6 @@ describe("marketplace.e2e", () => {
         commitment: "confirmed",
         skipPreflight: true,
       });
-      let listing = await marketplace.account.listing.fetch(ix.keys[5].pubkey);
-      console.log("MAKE LISTING:", ix.keys[5].pubkey.toBase58(), listing);
     });
     it("Can buy an NFT", async () => {
       let randomBuyerKp = anchor.web3.Keypair.generate();
@@ -98,17 +96,10 @@ describe("marketplace.e2e", () => {
         })
         .signers([randomBuyerKp])
         .instruction();
-      console.log("BUY LISTING:", ix.keys[5].pubkey.toBase58());
 
-      ix = await additionalAccountsRequest(
-        marketplace,
-        ix,
-        "buy_listing",
-        true
-      );
+      ix = await additionalAccountsRequest(marketplace, ix, "buy_listing");
 
       let tx = new anchor.web3.Transaction();
-      console.log(ix.keys.map((key) => key.pubkey.toBase58()));
       tx.add(ix);
       await provider.sendAndConfirm(tx, [randomBuyerKp], {
         commitment: "confirmed",
