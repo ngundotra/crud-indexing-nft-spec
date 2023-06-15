@@ -3,6 +3,13 @@
 version = 3
 
 [[package]]
+name = "additional-accounts-request"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+]
+
+[[package]]
 name = "ahash"
 version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -769,6 +776,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "marketplace"
+version = "0.1.0"
+dependencies = [
+ "additional-accounts-request",
+ "anchor-lang",
+ "nft-instructions",
+]
+
+[[package]]
 name = "memchr"
 version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -820,9 +836,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "nft-instructions"
+version = "0.1.0"
+dependencies = [
+ "additional-accounts-request",
+ "anchor-lang",
+]
+
+[[package]]
 name = "nft-style-one"
 version = "0.1.0"
 dependencies = [
+ "additional-accounts-request",
  "anchor-lang",
  "bs58-pubkey",
  "nft-events",

@@ -21,3 +21,4 @@ bs58-pubkey = { version = "0.1.0", path = "../../bs58-pubkey" }
 nft-events = { version = "0.1.0", path = "../../nft-events" }
 serde = { version = "1.0.163", features = ["derive"] }
 serde_json = "1.0"
+additional-accounts-request = { version = "0.1.0", path = "../../additional-accounts-request" }
