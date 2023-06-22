@@ -158,27 +158,29 @@ pub struct Swap<'info> {
     nft_program_a: AccountInfo<'info>,
     /// CHECK:
     asset_id_a: AccountInfo<'info>,
+    /// CHECK:
     authority_a: Signer<'info>,
     /// CHECK:
     nft_program_b: AccountInfo<'info>,
     /// CHECK:
     asset_id_b: AccountInfo<'info>,
+    /// CHECK:
     authority_b: Signer<'info>,
 }
 
 #[derive(Accounts)]
 #[instruction(price: u64)]
 pub struct List<'info> {
-    /// CHECK:
+    /// CHECK: Checked by CPI
     nft_program: AccountInfo<'info>,
-    /// CHECK:
+    /// CHECK: Checked by CPI
     #[account(mut)]
     asset: AccountInfo<'info>,
-    /// CHECK:
+    /// CHECK: Checked by CPI
     asset_owner: AccountInfo<'info>,
     #[account(mut)]
     authority: Signer<'info>,
-    /// CHECK:
+    /// CHECK: Checked by CPI
     fund_recipient: AccountInfo<'info>,
     #[account(init, space = 8 + 32 + 32 + 8 + 32 + 32, payer = authority, seeds = [b"listing".as_ref(), &price.to_le_bytes()], bump)]
     marketplace_listing: Account<'info, Listing>,

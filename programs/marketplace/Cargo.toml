@@ -16,6 +16,6 @@ cpi = ["no-entrypoint"]
 default = []
 
 [dependencies]
-anchor-lang = { git = "https://github.com/ngundotra/anchor", branch = "events", features=["event-cpi"]}
+anchor-lang = { version="0.28.0", features=["event-cpi"]}
 additional-accounts-request = { version = "0.1.0", path = "../../additional-accounts-request"}
 nft-instructions = { version = "0.1.0", path = "../../nft-instructions"}
