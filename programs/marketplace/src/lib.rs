@@ -106,9 +106,17 @@ pub mod marketplace {
 
     pub fn buy_listing<'info>(ctx: Context<'_, '_, '_, 'info, BuyListing<'info>>) -> Result<()> {
         // additional accounts transfer
+        let nft_program = &ctx.accounts.nft_program;
+        let asset = &ctx.accounts.asset;
         let listing = &ctx.accounts.marketplace_listing;
         let bump = *ctx.bumps.get("marketplace_listing").unwrap();
-        let seeds = &[b"listing".as_ref(), &listing.price.to_le_bytes(), &[bump]];
+        let seeds = &[
+            b"listing".as_ref(),
+            &nft_program.key.as_ref(),
+            &asset.key.as_ref(),
+            &listing.price.to_le_bytes(),
+            &[bump],
+        ];
         let signer = &[&seeds[..]];
 
         let cpi_ctx = CpiContext::new_with_signer(
@@ -182,7 +190,7 @@ pub struct List<'info> {
     authority: Signer<'info>,
     /// CHECK: Checked by CPI
     fund_recipient: AccountInfo<'info>,
-    #[account(init, space = 8 + 32 + 32 + 8 + 32 + 32, payer = authority, seeds = [b"listing".as_ref(), &price.to_le_bytes()], bump)]
+    #[account(init, space = 8 + 32 + 32 + 8 + 32 + 32, payer = authority, seeds = [b"listing".as_ref(), &nft_program.key.as_ref(), &asset.key.as_ref(), &price.to_le_bytes()], bump)]
     marketplace_listing: Account<'info, Listing>,
     system_program: Program<'info, System>,
 }
@@ -202,7 +210,7 @@ pub struct BuyListing<'info> {
     /// CHECK:
     #[account(mut)]
     fund_recipient: AccountInfo<'info>,
-    #[account(mut, seeds = [b"listing".as_ref(), &marketplace_listing.price.to_le_bytes()], bump)]
+    #[account(mut, seeds = [b"listing".as_ref(), &nft_program.key.as_ref(), &asset.key.as_ref(), &marketplace_listing.price.to_le_bytes()], bump)]
     marketplace_listing: Account<'info, Listing>,
     system_program: Program<'info, System>,
 }
