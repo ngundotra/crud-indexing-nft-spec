@@ -3,7 +3,7 @@ seeds = true
 skip-lint = false
 [programs.localnet]
 marketplace = "FbNmDTqYyvxU9gk3AWUXcQwDMo8vy4YeonJDBu5uCU2t"
-nft_style_one = "HzdXYkZw3589BQMS4JqS85chZH8PFGRZmyqTvEYB1Udh"
+nft_style_one = "G52tBxQ813dTNqvehtAsG4vcpJG3PNrVAMxVs1Vh1M89"
 nft_style_two = "9CB3S1yQhyxf5KFeRa6RYj2Np9qwiUpofZYoDQNKphMo"
 
 [registry]

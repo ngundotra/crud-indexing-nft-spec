@@ -103,20 +103,18 @@ and then an additional NFT RPC TS client that uses the indexer to provide useful
 
 ## Running tests
 
-Running the tests requires `coral-xyz/anchor` to be built from source, as we use features on the master
-branch that have not been released (as of 0.27). `Docker` is also required.
+Running the tests requires `coral-xyz/anchor` to be `>=0.28.0`. `Docker` is also required.
 
 1. Install TS dependencies: `yarn install`
-2. Symlink anchor locally `ln -s /path/to/anchor/build/debug|release/anchor ./eanchor`
-3. Setup docker environment using Postgres with 
+2. Setup docker environment using Postgres with 
 `docker run --name postgres -e POSTGRES_PASSWORD=mysecretpassword -d -v ~/PATH-TO-LOCAL-PG-DB:/var/lib/postgresql/data postgres`
-5. Run tests: `./eanchor test`
+3. Run tests: `anchor test`
 
 
 # Checklist
 
-- [ ] AAR for nft style one
+- [x] AAR for nft style one
 - [ ] AAR for nft style two
-- [ ] Local Marketplace
+- [x] Local Marketplace
 - [ ] 10k pfp
 - [ ] 10k pfp marketplace

@@ -11,7 +11,7 @@ use serde_json;
 use additional_accounts_request::{IAccountMeta, PreflightPayload};
 use bs58_pubkey::serde_pubkey;
 
-declare_id!("HzdXYkZw3589BQMS4JqS85chZH8PFGRZmyqTvEYB1Udh");
+declare_id!("G52tBxQ813dTNqvehtAsG4vcpJG3PNrVAMxVs1Vh1M89");
 
 #[program]
 pub mod nft_style_one {
