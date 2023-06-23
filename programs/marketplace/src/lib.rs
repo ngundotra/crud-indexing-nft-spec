@@ -57,17 +57,6 @@ pub mod marketplace {
             false,
         )?;
 
-        anchor_lang::system_program::transfer(
-            CpiContext::new(
-                ctx.accounts.system_program.clone().to_account_info(),
-                Transfer {
-                    from: ctx.accounts.authority.to_account_info(),
-                    to: ctx.accounts.marketplace_listing.to_account_info(),
-                },
-            ),
-            price,
-        )?;
-
         ctx.accounts.marketplace_listing.set_inner(Listing {
             asset_id: *ctx.accounts.asset.key,
             program_id: *ctx.accounts.nft_program.key,
@@ -136,8 +125,8 @@ pub mod marketplace {
             CpiContext::new(
                 ctx.accounts.system_program.to_account_info(),
                 Transfer {
-                    to: ctx.accounts.fund_recipient.to_account_info(),
                     from: ctx.accounts.buyer.to_account_info(),
+                    to: ctx.accounts.fund_recipient.to_account_info(),
                 },
             ),
             listing.price,

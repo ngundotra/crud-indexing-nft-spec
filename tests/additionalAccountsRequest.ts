@@ -30,7 +30,10 @@ export async function resolveRemainingAccounts<I extends anchor.Idl>(
   }
 
   if (!simulationResult.value.returnData) {
-    throw new Error("No return data found in preflight simulation");
+    throw new Error(
+      `No return data found in preflight simulation:
+      ${simulationResult.value.logs}`
+    );
   }
 
   // When the simulation RPC response is fixed, then the following code will work

@@ -35,16 +35,18 @@ describe("marketplace.e2e", () => {
           collection,
         })
         .signers([collectionKp])
-        .rpc({ commitment: "confirmed" });
+        .rpc({ commitment: "confirmed", skipPreflight: true });
 
+      /// TODO(ngundotra): mint a different # in the collection
+      /// if this has already been taken
       await nftProgram.methods
-        .mint(0, "hello", "MOM", "www.google.com")
+        .mint(0, "hello", "WOW", "www.google.com")
         .accounts({
           owner: provider.publicKey!,
           asset: metadata,
           collection,
         })
-        .rpc({ commitment: "confirmed" });
+        .rpc({ commitment: "confirmed", skipPreflight: true });
     });
 
     it("Can list an NFT", async () => {
@@ -73,11 +75,13 @@ describe("marketplace.e2e", () => {
       let randomBuyerKp = anchor.web3.Keypair.generate();
       let randomBuyer = randomBuyerKp.publicKey;
 
-      await provider.connection.requestAirdrop(
+      let txid = await provider.connection.requestAirdrop(
         randomBuyer,
-        5 * LAMPORTS_PER_SOL
+        Math.max(LAMPORTS_PER_SOL, listingPrice.toNumber())
       );
+      await provider.connection.confirmTransaction(txid);
 
+      metadata = new PublicKey("4ersNPS1dMAYaAa3bqd8iMShRq1hheKAHVdUHhiQPydZ"); //metadata,
       let ix = await marketplace.methods
         .buyListing()
         .accounts({
@@ -87,6 +91,8 @@ describe("marketplace.e2e", () => {
           marketplaceListing: PublicKey.findProgramAddressSync(
             [
               Buffer.from("listing"),
+              nftProgram.programId.toBuffer(),
+              metadata.toBuffer(),
               Buffer.from(listingPrice.toArray("le", 8)),
             ],
             marketplace.programId
