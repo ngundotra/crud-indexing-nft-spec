@@ -45,15 +45,17 @@ impl PreflightPayload {
     }
 }
 
-pub fn get_interface_accounts(program_key: &Pubkey) -> Result<PreflightPayload> {
+pub fn get_interface_accounts(program_key: &Pubkey, log_info: bool) -> Result<PreflightPayload> {
     let (key, program_data) = get_return_data().unwrap();
     assert_eq!(key, *program_key);
     let program_data = program_data.as_slice();
     let additional_interface_accounts = PreflightPayload::try_from_slice(&program_data)?;
-    msg!(
-        "Additional interface accounts: {:?}",
-        &additional_interface_accounts
-    );
+    if log_info {
+        msg!(
+            "Additional interface accounts: {:?}",
+            &additional_interface_accounts
+        );
+    }
     Ok(additional_interface_accounts)
 }
 
@@ -169,7 +171,7 @@ pub fn call<'info, C1: ToAccountInfos<'info> + ToAccountMetas>(
     if log_info {
         msg!("Parse return data");
     }
-    let additional_interface_accounts = get_interface_accounts(ctx.program.key)?;
+    let additional_interface_accounts = get_interface_accounts(ctx.program.key, log_info)?;
 
     // execute
     if log_info {
