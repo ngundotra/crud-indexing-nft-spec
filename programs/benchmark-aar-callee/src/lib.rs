@@ -23,6 +23,8 @@ fn create_accounts(num_accounts: u32) -> Vec<IAccountMeta> {
 
 #[program]
 pub mod benchmark_aar_callee {
+    use anchor_lang::solana_program::log::sol_log_compute_units;
+
     use super::*;
 
     pub fn preflight_transfer(
@@ -53,10 +55,7 @@ pub mod benchmark_aar_callee {
     }
 
     pub fn transfer(ctx: Context<Transfer>, num_accounts: u32) -> Result<()> {
-        msg!("Accounts: {:?}", ctx.accounts.to_account_metas(None));
-        msg!("Remaining accounts {:?}", &ctx.remaining_accounts);
         for idx in 0..num_accounts {
-            msg!("Checking index: {}", idx);
             let acct = ctx.remaining_accounts.get(idx as usize).unwrap();
             if acct.key() != get_pubkey(idx) {
                 msg!("Invalid account {}", idx);

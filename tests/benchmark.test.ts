@@ -5,6 +5,27 @@ import { BenchmarkAarCallee } from "../target/types/benchmark_aar_callee";
 import { ComputeBudgetProgram } from "@solana/web3.js";
 import { additionalAccountsRequest } from "./additionalAccountsRequest";
 
+function profileLogs(logs: string[], nameMap: Record<string, string>) {
+  let sums = {};
+  for (const log of logs) {
+    let matches = log.matchAll(
+      /^Program (.*) consumed (.*) of (.*) compute units/g
+    );
+
+    let match = matches.next();
+    if (match.value) {
+      let programId = match.value[1] as string;
+      let computeUnits = Number.parseInt(match.value[2]);
+      let totalCompute = Number.parseInt(match.value[3]);
+      sums[nameMap[programId]] = (sums[nameMap[programId]] ?? 0) + computeUnits;
+      // console.log(nameMap[programId] ?? programId, computeUnits, totalCompute);
+    }
+  }
+  // console.log(`Fat: ${fat} ${fat / sums["benchmark"]}`);
+  let fat = sums["benchmark"] - sums["callee"];
+  return { fat, pct: fat / sums["benchmark"] };
+}
+
 describe("marketplace.e2e", () => {
   anchor.setProvider(anchor.AnchorProvider.env());
 
@@ -14,6 +35,7 @@ describe("marketplace.e2e", () => {
 
   let provider = benchmark.provider;
   const params = [1, 5, 10, 20, 30];
+  // const params = [10];
 
   describe.skip("Vanilla preflight", () => {
     it("AAR works up to 30 accounts", async () => {
@@ -108,12 +130,21 @@ describe("marketplace.e2e", () => {
           firstCu = cus;
         }
 
-        console.log(
-          numAccounts,
-          cus,
-          cus - firstCu,
-          (cus - firstCu) / numAccounts
-        );
+        if (result.meta.logMessages) {
+          let nameMap = {};
+          nameMap[benchmark.programId.toBase58()] = "benchmark";
+          nameMap[callee.programId.toBase58()] = "callee";
+          let { fat, pct } = profileLogs(result.meta.logMessages, nameMap);
+
+          console.log(
+            numAccounts,
+            cus,
+            cus - firstCu,
+            (cus - firstCu) / numAccounts,
+            fat,
+            Math.floor(pct * 1e4) / 100
+          );
+        }
       }
     });
   });

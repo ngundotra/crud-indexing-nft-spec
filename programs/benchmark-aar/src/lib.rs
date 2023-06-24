@@ -18,7 +18,7 @@ fn create_accounts(num_accounts: u32) -> Vec<IAccountMeta> {
 
 #[program]
 pub mod benchmark_aar {
-    use additional_accounts_request::{call, call_preflight_interface_function};
+    use additional_accounts_request::{call, call_faster, call_preflight_interface_function};
     use anchor_lang::solana_program::{log::sol_log_compute_units, program::get_return_data};
 
     use super::*;
@@ -54,14 +54,17 @@ pub mod benchmark_aar {
         ctx: Context<'_, '_, '_, 'info, Callee<'info>>,
         num_accounts: u32,
     ) -> Result<()> {
-        msg!("{:?}", &ctx.remaining_accounts);
-        call(
+        msg!("Executing transfer: {} accounts...", num_accounts);
+        sol_log_compute_units();
+        call_faster(
             "transfer".to_string(),
             CpiContext::new(ctx.accounts.program.clone(), Empty {})
                 .with_remaining_accounts(ctx.remaining_accounts.to_vec()),
             num_accounts.try_to_vec()?,
             false,
         )?;
+        msg!("Finished transfer...");
+        sol_log_compute_units();
         Ok(())
     }
 }

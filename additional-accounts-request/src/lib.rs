@@ -1,11 +1,17 @@
 #![feature(generic_associated_types)]
+use core::num;
 use std::collections::HashMap;
 
+use anchor_lang::__private::ZeroCopyAccessor;
 use anchor_lang::prelude::*;
+use anchor_lang::solana_program::log::{sol_log, sol_log_compute_units};
+use anchor_lang::solana_program::program::{set_return_data, MAX_RETURN_DATA};
 use anchor_lang::solana_program::{
     hash,
     program::{get_return_data, invoke, invoke_signed},
 };
+
+use bytemuck::{cast_mut, cast_slice};
 
 #[derive(Debug, Clone, AnchorSerialize, AnchorDeserialize)]
 pub struct IAccountMeta {
@@ -43,6 +49,31 @@ impl PreflightPayload {
 
         Ok(found_accounts)
     }
+
+    // pub fn set_return_data(&self) {
+    //     let mut data = [0u8; MAX_RETURN_DATA];
+
+    //     let writer = &mut data;
+    //     let len_bytes = (self.accounts.len() as u32).to_le_bytes();
+    //     for (i, byte) in len_bytes.iter().enumerate() {
+    //         writer[i] = *byte;
+    //     }
+
+    //     for i in 0..self.accounts.len() {
+    //         let account = self.accounts.get(i).unwrap();
+    //         let account_key_bytes = bytemuck::bytes_of(&account.pubkey);
+
+    //         let start_idx = 4 + 34 * i;
+    //         for (j, byte) in account_key_bytes.iter().enumerate() {
+    //             writer[start_idx + j] = *byte;
+    //         }
+
+    //         writer[start_idx + 32] = if account.signer { 1 } else { 0 };
+    //         writer[start_idx + 33] = if account.writable { 1 } else { 0 };
+    //     }
+
+    //     set_return_data(&data);
+    // }
 }
 
 pub fn get_interface_accounts(program_key: &Pubkey, log_info: bool) -> Result<PreflightPayload> {
@@ -66,6 +97,7 @@ pub fn call_preflight_interface_function<'info, T: ToAccountInfos<'info> + ToAcc
     args: &[u8],
 ) -> Result<()> {
     // setup
+    sol_log_compute_units();
     let mut ix_data: Vec<u8> =
         hash::hash(format!("global:preflight_{}", &function_name).as_bytes()).to_bytes()[..8]
             .to_vec();
@@ -78,6 +110,8 @@ pub fn call_preflight_interface_function<'info, T: ToAccountInfos<'info> + ToAcc
         accounts: ix_account_metas,
         data: ix_data,
     };
+    sol_log_compute_units();
+    msg!("Preflighted...");
 
     // execute
     invoke(&ix, &ctx.accounts.to_account_infos())?;
@@ -93,6 +127,8 @@ pub fn call_interface_function<'info, T: ToAccountInfos<'info> + ToAccountMetas>
     additional_interface_accounts: PreflightPayload,
     log_info: bool,
 ) -> Result<()> {
+    msg!("Creating interface context...");
+    sol_log_compute_units();
     // setup
     let remaining_accounts = ctx.remaining_accounts.to_vec();
 
@@ -100,6 +136,8 @@ pub fn call_interface_function<'info, T: ToAccountInfos<'info> + ToAccountMetas>
         hash::hash(format!("global:{}", &function_name).as_bytes()).to_bytes()[..8].to_vec();
     ix_data.extend_from_slice(&args);
 
+    msg!("Account Metas creation...");
+    sol_log_compute_units();
     let mut ix_account_metas = ctx.accounts.to_account_metas(None);
     ix_account_metas.append(
         additional_interface_accounts
@@ -115,6 +153,8 @@ pub fn call_interface_function<'info, T: ToAccountInfos<'info> + ToAccountMetas>
             .collect::<Vec<AccountMeta>>()
             .as_mut(),
     );
+    sol_log_compute_units();
+    msg!("Account Metas created...");
 
     let ix = anchor_lang::solana_program::instruction::Instruction {
         program_id: ctx.program.key(),
@@ -126,11 +166,15 @@ pub fn call_interface_function<'info, T: ToAccountInfos<'info> + ToAccountMetas>
     if log_info {
         msg!("IX accounts: {:?}", &ix_ais.len());
     }
+    msg!("Account Info creation...");
+    sol_log_compute_units();
     ix_ais.extend_from_slice(
         &mut additional_interface_accounts
             .match_accounts(&remaining_accounts)?
             .to_vec(),
     );
+    sol_log_compute_units();
+    msg!("Account Infos created...");
 
     if log_info {
         msg!("IX accounts: {:?}", &ix_ais.len());
@@ -146,6 +190,8 @@ pub fn call_interface_function<'info, T: ToAccountInfos<'info> + ToAccountMetas>
         msg!("Signer seeds: {:?}", &ctx.signer_seeds);
     }
 
+    msg!("Finished creating context...");
+    sol_log_compute_units();
     // execute
     invoke_signed(&ix, &ix_ais, &ctx.signer_seeds)?;
     Ok(())
@@ -184,5 +230,93 @@ pub fn call<'info, C1: ToAccountInfos<'info> + ToAccountMetas>(
         additional_interface_accounts,
         log_info,
     )?;
+    Ok(())
+}
+
+const MAX_ACCOUNT_INFOS: usize = 30;
+
+// TODO(ngundotra): write this without any anchor stuff, and see if just moving slices around is faster
+pub fn call_faster<'info, C1: ToAccountInfos<'info> + ToAccountMetas>(
+    ix_name: String,
+    ctx: CpiContext<'_, '_, '_, 'info, C1>,
+    args: Vec<u8>,
+    verbose: bool,
+) -> Result<()> {
+    // preflight
+    call_preflight_interface_function(ix_name.clone(), &ctx, &args)?;
+
+    let (key, program_data) = get_return_data().unwrap();
+    assert_eq!(key, *ctx.program.key);
+
+    let program_data = program_data.as_slice();
+    let num_accounts = u32::try_from_slice(&program_data[..4])?;
+
+    let mut ix_ais: Vec<AccountInfo> = ctx.accounts.to_account_infos();
+    let mut ix_account_metas = ctx.accounts.to_account_metas(None);
+
+    // Maps from the requested_account to its ordering in remaining accounts
+    msg!("Testing the deserialization");
+    sol_log_compute_units();
+    let remaining_accounts = ctx.remaining_accounts.as_slice();
+    let mut num_found: u32 = 0;
+    for account_idx in 0..num_accounts {
+        let mut start_idx = 4 + account_idx as usize * 34;
+        let mut end_idx = 4 + (account_idx as usize + 1) * 34;
+
+        // let requested_account_meta =
+        // IAccountMeta::try_from_slice(&program_data[start_idx as usize..end_idx as usize])?;
+        let pubkey = cast_slice::<u8, Pubkey>(&program_data[start_idx..end_idx - 2])[0];
+        let is_signer: bool = program_data[end_idx - 2] == 1u8;
+        let is_writable: bool = program_data[end_idx - 1] == 1u8;
+
+        ix_account_metas.push(AccountMeta {
+            pubkey: pubkey.clone(),
+            is_signer,
+            is_writable,
+        });
+
+        // Yes this is O(M*N)
+        // M = len(requested accounts)
+        // N = len(remaining accounts)
+        // But in practice, this is faster than using hashmap bc CU fees
+        for floating_acc in remaining_accounts {
+            if *floating_acc.key == pubkey {
+                ix_ais.push(floating_acc.clone());
+                num_found += 1;
+            }
+        }
+    }
+    sol_log_compute_units();
+    msg!("Finished deserialization");
+
+    if num_found != num_accounts {
+        msg!(
+            "Could not find account infos for requested accounts. Found {}, expected {}",
+            num_found,
+            num_accounts
+        );
+        return Err(ProgramError::InvalidAccountData.into());
+    }
+
+    let mut ix_data: Vec<u8> =
+        hash::hash(format!("global:{}", &ix_name).as_bytes()).to_bytes()[..8].to_vec();
+    ix_data.extend_from_slice(&args);
+
+    let ix = anchor_lang::solana_program::instruction::Instruction {
+        program_id: ctx.program.key(),
+        accounts: ix_account_metas,
+        data: ix_data,
+    };
+
+    msg!("Right before final invoke...");
+    sol_log_compute_units();
+    invoke_signed(&ix, &ix_ais, &ctx.signer_seeds)?;
+    sol_log_compute_units();
+    msg!("Right after invoke...");
+    drop(ix_ais);
+    drop(ctx);
+    msg!("After dropping ix_ais");
+    sol_log_compute_units();
+
     Ok(())
 }
