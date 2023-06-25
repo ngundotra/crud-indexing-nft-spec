@@ -56,10 +56,17 @@ pub mod benchmark_aar {
     ) -> Result<()> {
         msg!("Executing transfer: {} accounts...", num_accounts);
         sol_log_compute_units();
+
+        let info = CpiContext::new(ctx.accounts.program.clone(), Empty {})
+            .with_remaining_accounts(ctx.remaining_accounts.to_vec());
+        msg!("Signer seeds: {:?}", info.signer_seeds);
         call_faster(
             "transfer".to_string(),
-            CpiContext::new(ctx.accounts.program.clone(), Empty {})
-                .with_remaining_accounts(ctx.remaining_accounts.to_vec()),
+            ctx.accounts.program.key(),
+            vec![],
+            vec![],
+            ctx.remaining_accounts,
+            info.signer_seeds,
             num_accounts.try_to_vec()?,
             false,
         )?;

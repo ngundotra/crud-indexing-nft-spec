@@ -233,31 +233,72 @@ pub fn call<'info, C1: ToAccountInfos<'info> + ToAccountMetas>(
     Ok(())
 }
 
-const MAX_ACCOUNT_INFOS: usize = 30;
+pub fn call_preflight_interface_function_faster<'info>(
+    function_name: String,
+    program_key: &Pubkey,
+    account_infos: &[AccountInfo<'info>],
+    account_metas: Vec<AccountMeta>,
+    args: &[u8],
+) -> Result<()> {
+    // setup
+    sol_log_compute_units();
+    let mut ix_data: Vec<u8> =
+        hash::hash(format!("global:preflight_{}", &function_name).as_bytes()).to_bytes()[..8]
+            .to_vec();
+
+    ix_data.extend_from_slice(args);
+
+    // let ix_account_metas = account_metas;
+    let ix = anchor_lang::solana_program::instruction::Instruction {
+        program_id: program_key.clone(),
+        accounts: account_metas,
+        data: ix_data,
+    };
+    sol_log_compute_units();
+    msg!("Preflighted...");
+
+    // execute
+    invoke(&ix, &account_infos)?;
+    Ok(())
+}
 
 // TODO(ngundotra): write this without any anchor stuff, and see if just moving slices around is faster
-pub fn call_faster<'info, C1: ToAccountInfos<'info> + ToAccountMetas>(
+pub fn call_faster<'info>(
     ix_name: String,
-    ctx: CpiContext<'_, '_, '_, 'info, C1>,
+    program_key: Pubkey,
+    account_infos: Vec<AccountInfo<'info>>,
+    account_metas: Vec<AccountMeta>,
+    remaining_accounts: &[AccountInfo<'info>],
+    signer_seeds: &[&[&[u8]]],
     args: Vec<u8>,
     verbose: bool,
 ) -> Result<()> {
     // preflight
-    call_preflight_interface_function(ix_name.clone(), &ctx, &args)?;
+    call_preflight_interface_function_faster(
+        ix_name.clone(),
+        &program_key,
+        &account_infos,
+        account_metas.clone(),
+        &args,
+    )?;
 
     let (key, program_data) = get_return_data().unwrap();
-    assert_eq!(key, *ctx.program.key);
+    assert_eq!(key, program_key);
 
     let program_data = program_data.as_slice();
     let num_accounts = u32::try_from_slice(&program_data[..4])?;
 
-    let mut ix_ais: Vec<AccountInfo> = ctx.accounts.to_account_infos();
-    let mut ix_account_metas = ctx.accounts.to_account_metas(None);
+    let mut ix_ais: Vec<AccountInfo> =
+        Vec::with_capacity(account_infos.len() + num_accounts as usize);
+    ix_ais.extend_from_slice(&account_infos);
+    let mut ix_account_metas: Vec<AccountMeta> =
+        Vec::with_capacity(account_metas.len() + num_accounts as usize);
+    ix_account_metas.extend_from_slice(&account_metas);
 
     // Maps from the requested_account to its ordering in remaining accounts
     msg!("Testing the deserialization");
     sol_log_compute_units();
-    let remaining_accounts = ctx.remaining_accounts.as_slice();
+    // let remaining_accounts = ctx.remaining_accounts.as_slice();
     let mut num_found: u32 = 0;
     for account_idx in 0..num_accounts {
         let mut start_idx = 4 + account_idx as usize * 34;
@@ -270,7 +311,7 @@ pub fn call_faster<'info, C1: ToAccountInfos<'info> + ToAccountMetas>(
         let is_writable: bool = program_data[end_idx - 1] == 1u8;
 
         ix_account_metas.push(AccountMeta {
-            pubkey: pubkey.clone(),
+            pubkey,
             is_signer,
             is_writable,
         });
@@ -283,6 +324,9 @@ pub fn call_faster<'info, C1: ToAccountInfos<'info> + ToAccountMetas>(
             if *floating_acc.key == pubkey {
                 ix_ais.push(floating_acc.clone());
                 num_found += 1;
+
+                // Only add account once, then break
+                break;
             }
         }
     }
@@ -303,18 +347,17 @@ pub fn call_faster<'info, C1: ToAccountInfos<'info> + ToAccountMetas>(
     ix_data.extend_from_slice(&args);
 
     let ix = anchor_lang::solana_program::instruction::Instruction {
-        program_id: ctx.program.key(),
+        program_id: program_key.clone(),
         accounts: ix_account_metas,
         data: ix_data,
     };
 
     msg!("Right before final invoke...");
     sol_log_compute_units();
-    invoke_signed(&ix, &ix_ais, &ctx.signer_seeds)?;
+    invoke_signed(&ix, &ix_ais, signer_seeds)?;
     sol_log_compute_units();
     msg!("Right after invoke...");
     drop(ix_ais);
-    drop(ctx);
     msg!("After dropping ix_ais");
     sol_log_compute_units();
 
