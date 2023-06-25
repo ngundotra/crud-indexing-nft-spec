@@ -4,5 +4,5 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-anchor-lang = { git = "https://github.com/ngundotra/anchor", branch = "events", features=["event-cpi"]}
+anchor-lang = "0.28.0"
 nft-events-macros = { path = "./syn", version = "0.1.0"}

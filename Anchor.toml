@@ -2,8 +2,10 @@
 seeds = true
 skip-lint = false
 [programs.localnet]
+benchmark-aar-callee = "EpUCijoepCSP7wEMmKZcB5V7aXt19E6YhuWKYKuayj2D"
+benchmark_aar = "BjchWSbz7LBQFQpH64cJTcL8qPiGQ8UM4n6Mmd67huS7"
 marketplace = "FbNmDTqYyvxU9gk3AWUXcQwDMo8vy4YeonJDBu5uCU2t"
-nft_style_one = "HzdXYkZw3589BQMS4JqS85chZH8PFGRZmyqTvEYB1Udh"
+nft_style_one = "G52tBxQ813dTNqvehtAsG4vcpJG3PNrVAMxVs1Vh1M89"
 nft_style_two = "9CB3S1yQhyxf5KFeRa6RYj2Np9qwiUpofZYoDQNKphMo"
 
 [registry]
@@ -11,7 +13,8 @@ url = "https://api.apr.dev"
 
 [provider]
 cluster = "Localnet"
-wallet = "~/.config/solana/id.json"
+wallet = "/Users/noahgundotra/.config/solana/id.json"
 
 [scripts]
+benchmark = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*benchmark.test.ts"
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"

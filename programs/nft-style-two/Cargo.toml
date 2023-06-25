@@ -16,7 +16,7 @@ cpi = ["no-entrypoint"]
 default = []
 
 [dependencies]
-anchor-lang = { git = "https://github.com/ngundotra/anchor", branch = "events", features=["event-cpi"]}
+anchor-lang = { version="0.28.0", features=["event-cpi"] }
 bs58-pubkey = { version = "0.1.0", path = "../../bs58-pubkey" }
 nft-events = { version = "0.1.0", path = "../../nft-events" }
 serde = { version = "1.0.163", features = ["derive"] }
