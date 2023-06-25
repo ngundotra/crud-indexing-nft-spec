@@ -1,6 +1,6 @@
 #![feature(generic_associated_types)]
 use core::num;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 use anchor_lang::__private::ZeroCopyAccessor;
 use anchor_lang::prelude::*;
@@ -300,6 +300,7 @@ pub fn call_faster<'info>(
     sol_log_compute_units();
     // let remaining_accounts = ctx.remaining_accounts.as_slice();
     let mut num_found: u32 = 0;
+    let mut account_popped = vec![false; remaining_accounts.len()];
     for account_idx in 0..num_accounts {
         let mut start_idx = 4 + account_idx as usize * 34;
         let mut end_idx = 4 + (account_idx as usize + 1) * 34;
@@ -320,14 +321,22 @@ pub fn call_faster<'info>(
         // M = len(requested accounts)
         // N = len(remaining accounts)
         // But in practice, this is faster than using hashmap bc CU fees
+        // NOTE: this does not work if requested_accounts has duplicates
+        let mut floating_idx = 0;
         for floating_acc in remaining_accounts {
-            if *floating_acc.key == pubkey {
+            if account_popped[floating_idx] {
+                floating_idx += 1;
+                continue;
+            }
+            if floating_acc.key == &pubkey {
                 ix_ais.push(floating_acc.clone());
                 num_found += 1;
 
                 // Only add account once, then break
+                account_popped[floating_idx] = true;
                 break;
             }
+            floating_idx += 1;
         }
     }
     sol_log_compute_units();

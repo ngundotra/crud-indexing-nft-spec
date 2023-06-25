@@ -8,4 +8,3 @@ edition = "2021"
 [dependencies]
 anchor-lang = { version="0.28.0", features=["event-cpi"]}
 bytemuck = "1.8.0"
-sokoban = "0.3.1"
